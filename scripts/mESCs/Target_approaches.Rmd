@@ -1,0 +1,457 @@
+---
+title: "Target_approaches"
+output: html_document
+date: "2023-10-04"
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+
+# The function to calculate miRNA activity in single cells. It is specific for this kind of data
+calculate_activity = function(counts_df, targets, mESC_data = T) {
+  cell_sums <- counts_df[rownames(counts_df) %in% targets$ensembl_gene_id,] %>% colSums() %>% as.data.frame()
+  if (mESC_data) {cell_sums_norm = cell_sums/mean(cell_sums[kos,])
+  } else {
+    cell_sums_norm = cell_sums/mean(cell_sums$.)
+  } 
+  activity <- -log2(cell_sums_norm) ; activity <- merge(activity, pheno, by.x = 0, by.y = "cells")
+  ko_activ = activity[activity$Exp == "KO", ]; control_activ = activity[activity$Exp == "Control", ]
+  d = (mean(ko_activ$.) - mean(control_activ$.))/sd(ko_activ$.)
+  overlap = (2*pnorm(-abs(d)/2))*100
+  diff <- (activity[activity$Exp == "Control",]$. %>% mean()) - (activity[activity$Exp == "KO",]$. %>% mean())
+  return(c(activity,overlap,diff))
+}
+```
+
+
+```{r}
+setwd("~/Desktop/microIMP_for_Vi/mESC_inhouse/")
+pheno = read.delim("./Data/phenotype.csv", sep = ",")
+# Change the name from WT to controls as it is more accurate
+pheno$Exp[pheno$Exp == "WT"] = "Control" 
+# Find the KO and control cells
+kos = pheno[pheno$Exp == "KO",]$cells ; controls = pheno[pheno$Exp == "Control",]$cells 
+# Read the count data
+counts = readRDS("~/Desktop/microIMP/microIMP_for_Vi/mESC_inhouse/Data/final_counts.rds") ; counts = counts[,colnames(counts) %in% pheno$cells]
+# Load the pre-processed targets
+targets = readRDS("./Data/Target_files/Targets_combined_NEW.rds")
+# Combine scores of genes that are targets of more than one miRNA
+targets = targets %>% group_by(ensembl_gene_id) %>% mutate(score = sum(Cumulative.weighted.context...score)) %>% ungroup() %>% distinct(pick(ensembl_gene_id),.keep_all = T)
+
+```
+
+# Calculate the activity when all the targets are considered
+
+```{r}
+#targets = targets[targets$ensembl_gene_id %in% cov_genes,]
+activity = calculate_activity(counts_df = counts, targets = targets, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+```
+
+```{r}
+p1 <- ggplot(activity_matrix, aes(x = Activity, fill = Pheno)) +
+  geom_density(color="black", alpha=0.8, outline.type = "both", size = 1.3) +
+  theme(panel.border = element_rect(colour = "black", linewidth = 2, fill = NA),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(colour = "black", linetype = "dashed", linewidth = 0.2),
+        panel.grid.major.x = element_blank(),
+        axis.title.x = element_text( size = 16),
+        axis.title.y = element_text( size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_blank())+
+  scale_fill_manual(values = c("royalblue4","lightblue1")) +
+  #xlim(c(-0.2,0.2)) +
+  #xlim(c(min(activity_matrix$Activity)-0.2,max(activity_matrix$Activity)+0.2)) +
+  labs(title = paste0( "All targets     Overlap = ", round(overlap, digits = 3), "%   ", "Mean difference = ", round(diff, digits = 2)), x="Activity ", y = "Density")
+p1
+##ggsave(filename = "all.png",plot = p1, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+```
+
+
+# Calculate the activity when the top half of the targets is considered ( in terms of Cumulative score)
+
+```{r}
+targets2 = targets %>% arrange(score)
+targets2 = targets2[1:round(nrow(targets2)/2),]
+activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+p2 <- ggplot(activity_matrix, aes(x = Activity, fill = Pheno)) +
+  geom_density(color="black", alpha=0.8, outline.type = "both", size = 1.3) +
+  theme(panel.border = element_rect(colour = "black", linewidth = 2, fill = NA),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(colour = "black", linetype = "dashed", linewidth = 0.2),
+        panel.grid.major.x = element_blank(),
+        axis.title.x = element_text( size = 16),
+        axis.title.y = element_text( size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_blank())+
+  scale_fill_manual(values = c("royalblue4","lightblue1")) +
+  xlim(c(-0.5,0.5)) +
+  #xlim(c(min(activity_matrix$Activity)-0.2,max(activity_matrix$Activity)+0.2)) +
+  labs(title = paste0( "Top half targets     Overlap = ", round(overlap, digits = 3), "%   ", "Mean difference = ", round(diff, digits = 2)), x="Activity ", y = "Density")
+p2
+
+#ggsave(filename = "top_half.png",plot = p2, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+```
+
+# Calculate the activity when the top 1000 targets is considered ( in terms of Cumulative score)
+
+
+```{r}
+targets2 = targets %>% arrange(score)
+targets2 = targets2[1:1000,]
+activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+p3 <- ggplot(activity_matrix, aes(x = Activity, fill = Pheno)) +
+  geom_density(color="black", alpha=0.8, outline.type = "both", size = 1.3) +
+  theme(panel.border = element_rect(colour = "black", linewidth = 2, fill = NA),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(colour = "black", linetype = "dashed", linewidth = 0.2),
+        panel.grid.major.x = element_blank(),
+        axis.title.x = element_text( size = 16),
+        axis.title.y = element_text( size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_blank())+
+  scale_fill_manual(values = c("royalblue4","lightblue1")) +
+  xlim(c(-0.7,0.7)) +
+  #xlim(c(min(activity_matrix$Activity)-0.2,max(activity_matrix$Activity)+0.2)) +
+  labs(title = paste0( "Top 1000     Overlap = ", round(overlap, digits = 3), "%   ", "Mean difference = ", round(diff, digits = 2)), x="Activity ", y = "Density")
+p3
+
+#ggsave(filename = "top_1000.png",plot = p3, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+```
+
+# Calculate the activity when the top 200 targets is considered ( in terms of Cumulative score)
+
+
+```{r}
+targets2 = targets %>% arrange(score)
+targets2 = targets2[1:200,]
+activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+p4 <- ggplot(activity_matrix, aes(x = Activity, fill = Pheno)) +
+  geom_density(color="black", alpha=0.8, outline.type = "both", size = 1.3) +
+  theme(panel.border = element_rect(colour = "black", linewidth = 2, fill = NA),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(colour = "black", linetype = "dashed", linewidth = 0.2),
+        panel.grid.major.x = element_blank(),
+        axis.title.x = element_text( size = 16),
+        axis.title.y = element_text( size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_blank())+
+  scale_fill_manual(values = c("royalblue4","lightblue1")) +
+  xlim(c(-1.4,1.4)) +
+  #xlim(c(min(activity_matrix$Activity)-0.2,max(activity_matrix$Activity)+0.2)) +
+  labs(title = paste0( "Top 200     Overlap = ", round(overlap, digits = 3), "%   ", "Mean difference = ", round(diff, digits = 2)), x="Activity ", y = "Density")
+p4
+
+#ggsave(filename = "top_200.png",plot = p4, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+```
+
+# Calculate overlap and distance at every N. 
+# Top N targets are used in every calculation after they have been arranged by descending score
+
+
+```{r}
+
+res2 = lapply(1:nrow(targets), function(i) {
+  targets2 = targets %>% arrange(score)
+  targets2 = targets2[1:i,]
+  activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+  activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+  overlap = activity[[4]]
+  diff = activity[[5]]
+  return(c(overlap,diff))
+})
+  
+res = res2 %>% purrr::reduce(rbind) %>% as.data.frame(); colnames(res) = c("Overlap", "Distance"); rownames(res) = c(1:nrow(targets))
+res$Targets_included = c(1:nrow(targets))
+res$source = "Arranged"
+
+```
+
+# Calculate overlap and distance at every N. 
+# Top N targets are used in every calculation after they have been randomly shuffled.
+# TODO: shuffle more times and calculate the average in each N. Maybe shuffle 1000 times, 100 if it takes too long.
+
+
+```{r}
+set.seed(seed = 1312)
+targets = targets[sample(nrow(targets)),]
+
+
+res2_rand = lapply(1:nrow(targets), function(i) {
+  #targets2 = targets %>% arrange(score)
+  targets2 = targets[1:i,]
+  activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+  activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+  overlap = activity[[4]]
+  diff = activity[[5]]
+  return(c(overlap,diff))
+})
+  
+res_rand = res2_rand %>% purrr::reduce(rbind) %>% as.data.frame(); colnames(res_rand) = c("Overlap", "Distance"); rownames(res_rand) = c(1:nrow(targets))
+res_rand$Targets_included = c(1:nrow(targets))
+res_rand$source = "Shuffled"
+
+```
+
+Next: Try the Negative control targets from the Negative_Control script and the random targets from Marcel's random_genes script. 
+Then try the same with the other datasets.
+
+# Use the Negative Control Targets miR-1,9,122 families.
+# Calculate overlap and distance at every N. 
+# Top N targets are used in every calculation after they have been arranged by descending score.
+
+```{r}
+targets_NC = readRDS("~/Desktop/microIMP/mESC/Target_comp/Targets_NC_new.rds")
+targets_NC = targets_NC %>% group_by(ensembl_gene_id) %>% mutate(score = sum(Cumulative.weighted.context...score)) %>% ungroup() %>% distinct(pick(ensembl_gene_id),.keep_all = T)
+
+res2_NC = lapply(1:nrow(targets_NC), function(i) {
+  targets2 = targets_NC %>% arrange(score)
+  targets2 = targets2[1:i,]
+  activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+  activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+  overlap = activity[[4]]
+  diff = activity[[5]]
+  return(c(overlap,diff))
+})
+  
+res_NC = res2_NC %>% purrr::reduce(rbind) %>% as.data.frame(); colnames(res_NC) = c("Overlap", "Distance"); rownames(res_NC) = c(1:nrow(targets_NC))
+res_NC$Targets_included = c(1:nrow(targets_NC))
+res_NC$source = "Negative Control"
+```
+
+# Use random genes as targets, the genes are picked so that they resemble miRNAs targets in terms of length and GC content.
+# This code was given by Marcel, I don't really get it right now and I am not sure it works as it should, need to figure out.
+# Calculate overlap and distance at every N. 
+# Top N targets are used in every calculation after they have been arranged by descending score.
+# TODO: Make sure the code works as intended
+
+```{r}
+
+sample_constraint_to_many <- function(all, subset, size, N=5, cutoff=0.1) # 'all' is a matrix with all genes and the measurements to balance for, column names are gene names # by Marcel Tarbier
+{
+  probability_matrix = matrix(NA, nrow=nrow(all), ncol=ncol(all))
+  for (j in seq(1, nrow(all)))
+  {
+    bin_boundaries = quantile(all[j,], seq(0,N)/N, na.rm=T); bin_boundaries[1] <- bin_boundaries[1]-1
+    all_j = all[j,]; all_j_noNA = all_j[!is.na(all_j)]; subset_noNA = intersect(subset, names(all_j_noNA))
+    hits_in_bin_list = rep(NA, N); gene_probabilities = rep(0, length(all_j)); names(gene_probabilities) = names(all_j)
+    for (i in seq(1,N))
+    {
+      bin_size = sum((all_j_noNA>bin_boundaries[i])&(all_j_noNA<=bin_boundaries[i+1]))
+      hits_in_bin = min(sum((all_j_noNA[subset_noNA]>bin_boundaries[i])&(all_j_noNA[subset_noNA]<=bin_boundaries[i+1]))+(1/N), bin_size)
+      hits_in_bin_list[i] <- hits_in_bin
+      gene_probabilities[names(all_j_noNA[(all_j_noNA>bin_boundaries[i])&(all_j_noNA<=bin_boundaries[i+1])])] = hits_in_bin/bin_size
+    }
+    gene_probabilities[gene_probabilities==0] <- min(gene_probabilities[gene_probabilities!=0])
+    probability_matrix[j,] = gene_probabilities
+  }
+  total_probabilities = rep(1, ncol(all)); names(total_probabilities) = colnames(all)
+  j = 1
+  for (j in seq(1, nrow(all))) {total_probabilities = total_probabilities * probability_matrix[j,]}
+  check = F
+  while ((!check))
+  {
+    test = base::sample(names(total_probabilities), replace=F, prob=total_probabilities, size=size)
+    check = T; for (j in seq(1, nrow(all))) {check = check & (t.test(all[j,subset], all[j,test])$p.value > cutoff)}
+    if (!check) {cutoff = cutoff - 0.001}
+  }
+  #print(paste("succeeded with p-value of ", t.test(all[subset], all[test])$p.value, sep=""))
+  return(test)
+}
+
+```
+
+
+```{r}
+set.seed(1312)
+load('~/Desktop/microIMP/mESC/Random_Genes_UPPMAX/master_matrix_Panos.RData'); genes = master_matrix$ENSEMBL_ID %>% na.omit()
+
+
+miRNA_targets = readRDS(file = "~/Desktop/microIMP/mESC/Figure1/data/Targets/Targets_new.rds"); miRNA_targets= miRNA_targets[, "Target.gene"]
+miRNA_targets = master_matrix[miRNA_targets,"ENSEMBL_ID"]; miRNA_targets = miRNA_targets[!is.na(miRNA_targets)]
+#genes = genes[!genes %in% miRNA_targets]
+master_matrix = master_matrix[master_matrix$ENSEMBL_ID %in% genes,]
+GC_and_length_data = cbind(master_matrix$GC, master_matrix$length, master_matrix$`3UTR_length`); rownames(GC_and_length_data) = master_matrix$ENSEMBL_ID; colnames(GC_and_length_data) = c('GC','length','UTR'); GC_and_length_data = t(GC_and_length_data)
+targets_random = sample_constraint_to_many(all = GC_and_length_data, subset = miRNA_targets, size = length(miRNA_targets), N = 20, cutoff=0.5)
+targets_random = targets_random %>% as.data.frame(); colnames(targets_random) = "ensembl_gene_id"
+targets_random = targets_random[!targets_random$ensembl_gene_id %in% targets$ensembl_gene_id,]%>% as.data.frame(); colnames(targets_random) = "ensembl_gene_id"
+
+res2_random_targets = lapply(1:nrow(targets_random), function(i) {
+  #targets2 = targets_random %>% arrange(score)
+  targets2 = targets_random[1:i,] %>% as.data.frame(); colnames(targets2) = "ensembl_gene_id"
+  activity = calculate_activity(counts_df = counts, targets = targets2, mESC_data = T)
+  activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+  overlap = activity[[4]]
+  diff = activity[[5]]
+  return(c(overlap,diff))
+})
+  
+res_random_targets= res2_random_targets %>% purrr::reduce(rbind) %>% as.data.frame(); colnames(res_random_targets) = c("Overlap", "Distance"); rownames(res_random_targets) = c(1:nrow(targets_random))
+res_random_targets$Targets_included = c(1:nrow(res_random_targets))
+res_random_targets$source = "Random genes"
+
+```
+
+Combine all the results and plot them.
+
+```{r}
+results = rbind(res,res_rand) %>% rbind(res_NC) %>% rbind(res_random_targets)
+
+p4 = ggplot() + geom_line(data = results,mapping = aes(x = Targets_included, y = Overlap, color = source), size = 1 ) +theme_bw()
+p4
+ggsave(filename = "compare_targets.png",plot = p4, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+
+#saveRDS(results,"~/Desktop/microIMP/mESC/Target_comp/results.rds")
+#results = readRDS("~/Desktop/microIMP/mESC/Target_comp/results.rds")
+```
+
+```{r}
+#| source == "Shuffled" | source == "Random genes" | source == "Negative Control"
+#results = readRDS("~/Desktop/microIMP/mESC/Target_comp/results.rds")
+results = results %>% filter(Targets_included > 5)
+results$source = factor(results$source,levels = c("Arranged","Shuffled", "Random genes", "Negative Control") )
+p5 = ggplot() + geom_line(data = results %>% filter(source == "Arranged"),mapping = aes(x = Targets_included, y = Overlap, color = source), size = 1 ) +
+  #geom_point(data = cov_point, mapping = aes(x = V1, y = diff), size = 4, color = "darkred")+
+  scale_color_manual(values = c("#551935")) + 
+  #scale_color_manual(values = c("#551935","#d0c4d0")) + 
+  #scale_color_manual(values = c("#551935","#d0c4d0","#f8a966")) + 
+  #scale_color_manual(values = c("#551935","#d0c4d0","#f8a966","#ffd0a0")) + 
+  ylim(0,100) + 
+  theme_classic() + 
+  theme(legend.title = element_blank())
+p5
+
+
+#ggsave(filename = "targets_vs_overlap_NO_cov_1.png",plot = p5, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+
+
+p6 = ggplot() + geom_line(data = results,mapping = aes(x = Targets_included, y = Overlap, color = source), size = 1 )+ 
+  #geom_point(data = cov_point, mapping = aes(x = V1, y = overlap), size = 4, color = "darkred")+
+  theme_bw() + scale_color_manual(values = c("#551935","#d0c4d0","#f8a966","#ffd0a0"))
+p6
+
+#ggsave(filename = "targets_vs_overlap_NO_cov.png",plot = p6, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+
+```
+
+
+
+
+Next, try the covarience approach.
+
+
+```{r}
+
+cov_targets07 = readRDS("~/Desktop/microIMP/mESC/Figure1/data/Targets/cov_genes_07.rds")
+targets_cov = targets[targets$ensembl_gene_id %in% cov_targets07,]
+activity = calculate_activity(counts_df = counts, targets = targets_cov, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+
+cov_point = cbind(54,diff) %>% cbind(overlap) %>% as.data.frame()
+
+```
+
+```{r}
+results = results %>% filter(Targets_included > 5)
+p7 = ggplot() + geom_line(data = results,mapping = aes(x = Targets_included, y = Distance, color = source), size = 1 )+ 
+  geom_point(data = cov_point, mapping = aes(x = V1, y = diff), size = 4, color = "darkred")+theme_bw()+ scale_color_manual(values = c("#551935","#d0c4d0","#f8a966","#ffd0a0")) + ylim(-0.25,1.6)
+p7
+
+ggsave(filename = "targets_vs_distance_cov.png",plot = p7, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+
+
+p8 = ggplot() + geom_line(data = results,mapping = aes(x = Targets_included, y = Overlap, color = source), size = 1 )+ 
+  geom_point(data = cov_point, mapping = aes(x = V1, y = overlap), size = 4, color = "darkred")+theme_bw() + scale_color_manual(values = c("#551935","#d0c4d0","#f8a966","#ffd0a0"))
+p8
+
+ggsave(filename = "targets_vs_overlap_cov.png",plot = p8, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+
+```
+
+```{r}
+activity = calculate_activity(counts_df = counts, targets = targets %>% arrange(Cumulative.weighted.context...score) %>% head(n = 200), mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+
+#calculate_activity(counts_df = counts,targets = covaring_genes,mESC_data = T)
+p_cov <- ggplot(activity_matrix, aes(x = Activity, fill = Pheno)) +
+  geom_density(color="black", alpha=0.8, outline.type = "both", size = 1.3) +
+  theme(panel.border = element_rect(colour = "black", linewidth = 2, fill = NA),
+        panel.background = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(colour = "black", linetype = "dashed", linewidth = 0.2),
+        panel.grid.major.x = element_blank(),
+        axis.title.x = element_text( size = 16),
+        axis.title.y = element_text( size = 16),
+        plot.title = element_text(size = 18, hjust = 0.5),
+        legend.title = element_blank())+
+  scale_fill_manual(values = c("royalblue4","lightblue1")) +
+  #xlim(c(-0.6,2.3)) +
+  #xlim(c(min(activity_matrix$Activity)-0.2,max(activity_matrix$Activity)+0.2)) +
+  labs(title = paste0( "All targets     Overlap = ", round(overlap, digits = 3), "%   ", "Mean difference = ", round(diff, digits = 2)), x="Activity ", y = "Density")
+
+p_cov
+
+ggsave(filename = "covariant_targets.png",plot = p_cov, path = "~/Desktop/microIMP/mESC/Target_comp/",height = 4, width = 6)
+```
+
+
+#What position are the covaring targets in the arranged table?
+
+```{r}
+targets = targets %>% arrange(score)
+targets$position = seq(1:nrow(targets))
+targets_cov = targets[targets$ensembl_gene_id %in% cov_targets07,]
+median(targets_cov$position)
+
+```
+
+```{r}
+
+cov_targets05 = readRDS("~/Desktop/microIMP/mESC/Figure1/data/Targets/cov_genes_07.rds")
+targets_cov = targets[targets$ensembl_gene_id %in% cov_targets07,]
+activity = calculate_activity(counts_df = counts, targets = targets_cov, mESC_data = T)
+activity_matrix = activity[1:3] %>% as.data.frame(); rownames(activity_matrix) = activity_matrix$Row.names; activity_matrix = activity_matrix[,2:3]; colnames(activity_matrix) = c("Activity", "Pheno")
+overlap = activity[[4]]
+diff = activity[[5]]
+
+cov_point = cbind(54,diff) %>% cbind(overlap) %>% as.data.frame()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

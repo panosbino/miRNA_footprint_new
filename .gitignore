@@ -1,0 +1,24 @@
+# External tool clones -- fetched via setup_tools.sh, not vendored
+tools/miReact/
+tools/R_library/
+
+# Environment/dependency artifacts -- never belong in git
+conda_pkgs/
+pip_cache/
+mpl_cache/
+tmp/
+R_library/
+.Renviron
+
+# Large or raw data -- lives on Dardel filesystem, not GitHub
+datasets/*/raw/
+*.dgecounts.rds
+
+# Generated outputs -- regenerable from scripts, don't need version control
+analysis/**/plots/*.png
+analysis/**/plots/*.pdf
+
+# R/general junk
+.Rhistory
+.Rproj.user/
+.DS_Store

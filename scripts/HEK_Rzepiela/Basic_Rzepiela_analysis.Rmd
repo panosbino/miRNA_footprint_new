@@ -1,0 +1,225 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document:
+    df_print: paged
+---
+
+Load the normalized counts, the targets and the GFP counts.
+
+```{r}
+library(tidyverse, quietly = TRUE, verbose = FALSE)
+setwd("E:/Xuexi/miRNA_footprint/HEK_Rzepiela")
+```
+
+```{r}
+
+counts = readRDS(file = "./Data/counts.rds")
+targets = readRDS(file = "./Data/Target_files/Targets__combined_199-5p_199-3p.rds")
+GFP_counts = readRDS(file = "./Data/GFP_counts.rds")
+
+```
+
+Calculate the activity. The activity is calculated as the log2 of the normalized counts divided by the mean of the normalized counts. 
+
+Strong miRNA activity → Lower target gene expression → Higher activity score
+Weak miRNA activity → Higher target gene expression → Lower activity score
+
+```{r}
+calculate_activity = function(counts, targets) {
+  cell_sums = counts[targets$ensembl_gene_id,] %>% na.omit() %>% colSums() %>% as.data.frame()
+  cell_sums_norm = cell_sums/mean(cell_sums$.)
+  activity = -log2(cell_sums_norm) + 1
+  return(activity)
+}
+
+activity = calculate_activity(counts = counts, targets = targets)
+```
+
+Find the correlation between the miRNA activity and the GFP counts.
+
+
+```{r}
+cor_df = merge(activity, GFP_counts, by.x = 0, by.y = 0); rownames(cor_df) = cor_df$Row.names; cor_df = cor_df[,2:3];colnames(cor_df) = c("activity", "GFP")
+cor_df = cor_df[cor_df$GFP < 20000,]
+cor = cor.test(cor_df$activity, cor_df$GFP, method = "spearman", exact = FALSE)
+```
+```{r}
+cor2 = cor.test(cor_df$activity, cor_df$GFP, method = "pearson", exact = FALSE)
+```
+
+The dot density for plotting the correlation. The density is calculated using the kde2d function from the MASS package.
+
+```{r}
+get_density <- function(x, y, ...) {
+  dens <- MASS::kde2d(x, y, ...)
+  ix <- findInterval(x, dens$x)
+  iy <- findInterval(y, dens$y)
+  ii <- cbind(ix, iy)
+  return(dens$z[ii])
+}
+# n controls the grid size or smoothing. Higher n = finer grain density estimation
+cor_df$density = get_density(cor_df$activity, cor_df$GFP, n = 100)
+```
+
+Plot the correlation
+
+```{r}
+library(viridis)
+ggplot() + geom_point(data = cor_df,aes(activity, GFP, color = density))  + scale_color_viridis() +
+  geom_smooth(data = cor_df,aes(activity, GFP),method = "lm", se = TRUE, colour = "black") +
+  theme(legend.position="none",
+        plot.title = element_text(hjust = 0.5)) +
+  labs(title = paste0("Correlation   $\\rho$ = ", round(cor[4]$estimate, digits = 3),"  p-value = ", formatC(cor[3]$p.value,format = "e", digits = 3  )  )) +
+  theme_bw(base_size = 16)
+```
+
+Show the top 5% vs bottom 5%
+
+```{r}
+top = arrange(cor_df, desc(activity))[1:164, ]
+top$Type = "top"
+mean_GFP_top = mean(top$GFP)
+
+bottom = arrange(cor_df, activity)[1:164, ]
+bottom$Type = "bottom"
+mean_eGFP_bottom = mean(bottom$GFP)
+
+plot_5percent = rbind(top,bottom)
+```
+
+
+```{r}
+ggplot(plot_5percent) + geom_violin(aes(x = Type, y = GFP, fill = Type)) +
+  ggtitle("Top 5% vs bottom 5% comparison") +
+  labs(x = "") + 
+  scale_fill_manual(values=c("palevioletred2", "palegreen3")) +
+  theme(legend.position = "None", 
+        plot.title = element_text(hjust = 0.5), 
+        panel.background = element_blank(),
+        axis.line = element_line()) +
+    stat_summary(aes(x = Type, y = GFP, fill = Type),fun = "mean",
+               geom = "point",
+               color = "black")
+```
+
+
+```{r}
+ggplot(plot_5percent) + 
+  # Add violin plot with transparency
+  geom_violin(aes(x = Type, y = GFP, fill = Type), 
+             alpha = 0.7,
+             trim = FALSE) +
+  
+  # Add boxplot inside violin for quartile information
+  geom_boxplot(aes(x = Type, y = GFP), 
+               width = 0.15,
+               fill = "white",
+               alpha = 0.5) +
+  
+  # Add individual points with jitter
+  #geom_jitter(aes(x = Type, y = GFP),
+  #            width = 0.1,
+  #            alpha = 0.4,
+  #            size = 1) +
+  
+  # Add mean point with custom shape and size
+  stat_summary(aes(x = Type, y = GFP),
+              fun = mean,
+              geom = "point",
+              size = 3,
+              color = "black",
+              shape = 23,
+              fill = "white") +
+  
+  # Add error bars for standard error
+  stat_summary(aes(x = Type, y = GFP),
+              fun.data = mean_se,
+              geom = "errorbar",
+              width = 0.1) +
+  
+  # Enhanced title and labels
+  ggtitle("Top 5% vs Bottom 5% GFP Comparison") +
+  labs(x = "",
+       y = "GFP Expression") +
+  
+  # Custom colors with slightly muted tones
+  scale_fill_manual(values = c("#FF9DB5", "#90EE90")) +
+  
+  # Enhanced theme
+  theme_minimal() +
+  theme(
+    # Text elements
+    plot.title = element_text(hjust = 0.5,
+                            face = "bold",
+                            size = 14,
+                            margin = margin(b = 20)),
+    axis.title.y = element_text(size = 12,
+                               margin = margin(r = 10)),
+    axis.text = element_text(size = 10),
+    
+    # Plot elements
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(fill = NA, color = "gray80"),
+    axis.line = element_line(color = "black"),
+    
+    # Legend
+    legend.position = "none"
+  )
+```
+
+Here we exclude cells based on their read depth. Check how the correlation changes depending on the cutoff.
+```{r}
+raw_counts = readRDS("./Data/raw_counts.rds")
+```
+
+```{r}
+
+
+raw_sums = colSums(raw_counts) %>% as.data.frame()
+
+x = 2000
+df = lapply(seq(0,60000,10), function(x){
+  top_cells = raw_counts[,raw_sums > x] %>% colnames()
+  activity = calculate_activity(counts = counts[,top_cells], targets = targets)
+  colnames(activity) <- "activity"
+  a <- merge(activity,GFP_counts, by.x = 0, by.y = 0)
+  cor <- cor.test(a$activity, a$eGFP, method = "spearman", exact = FALSE)
+  return(c(cor$estimate, x))
+}) %>% as.data.frame()
+
+d = df %>% t() %>% as.data.frame(); colnames(d) = c("rho", "cutoff"); rownames(d) = seq(1,dim(d)[1])
+
+p1 = ggplot() + geom_histogram(data = raw_sums, aes(x = .), alpha = 0.5, color = "black", fill = "grey90") + 
+  geom_point(data = d, aes(x = cutoff, y = rho*1000), color = "cornflowerblue", size = 1.5) +
+   theme_classic() + xlab(label = "Raw count sum") + scale_y_continuous(
+    name = "Freq",
+    sec.axis = sec_axis( trans=~./1000, name="spearman rho"))
+  
+
+p1
+```
+
+```{r}
+best_cor = slice_max(.data = d, order_by = rho)$rho
+best_cor_cutoff = slice_max(.data = d, order_by = rho)$cutoff # 48630
+best_cells = raw_sums %>% filter(. > best_cor_cutoff) %>% rownames()
+```
+
+Find the best correlation and plot at that point.
+
+```{r}
+sub_cor_df = cor_df[best_cells,]
+cor_sub =  cor.test(sub_cor_df$activity, sub_cor_df$GFP, method = "spearman", exact = FALSE)
+
+ggplot() + geom_point(data = sub_cor_df,aes(activity, GFP),color = "cornflowerblue") +
+  geom_smooth(data = sub_cor_df,aes(activity, GFP),method = "lm", se = TRUE, colour = "black") +
+  theme(legend.position="none",
+        plot.title = element_text(hjust = 0.5)) +
+  labs(title = paste0("hsa-mir-199-3p   $\\rho$ = ", round(cor_sub[4]$estimate, digits = 3),"  p-value = ", formatC(cor_sub[3]$p.value,format = "e", digits = 3  )  )) +
+  theme_bw(base_size = 16)
+
+```
