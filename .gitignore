@@ -15,8 +15,6 @@ datasets/*/raw/
 *.dgecounts.rds
 
 # Generated outputs -- regenerable from scripts, don't need version control
-analysis/**/plots/*.png
-analysis/**/plots/*.pdf
 
 # R/general junk
 .Rhistory
