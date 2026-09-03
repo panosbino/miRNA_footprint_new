@@ -1,0 +1,133 @@
+.
+├── analysis
+│   └── HEK_SS3
+│       ├── mir124_activity_gfp
+│       │   └── plots
+│       │       ├── mir124_activity_vs_GFP_all_cutoffs_grid.png
+│       │       ├── mir124_activity_vs_fluo_top100.png
+│       │       ├── mir124_activity_vs_fluo_top1000.png
+│       │       ├── mir124_activity_vs_fluo_top200.png
+│       │       ├── mir124_activity_vs_fluo_top500.png
+│       │       ├── mir124_activity_vs_norm_top100.png
+│       │       ├── mir124_activity_vs_norm_top1000.png
+│       │       ├── mir124_activity_vs_norm_top200.png
+│       │       ├── mir124_activity_vs_norm_top500.png
+│       │       ├── mir124_activity_vs_raw_top100.png
+│       │       ├── mir124_activity_vs_raw_top1000.png
+│       │       ├── mir124_activity_vs_raw_top200.png
+│       │       └── mir124_activity_vs_raw_top500.png
+│       ├── plots
+│       │   ├── ridge_gfp_expression_by_dox.png
+│       │   ├── umap_dox_binary.png
+│       │   ├── umap_dox_binary_by_plate.png
+│       │   ├── umap_dox_concentration.png
+│       │   ├── umap_dox_concentration_faceted.png
+│       │   ├── umap_gfp_expression_95percentile.png
+│       │   ├── umap_gfp_expression_99percentile.png
+│       │   ├── umap_gfp_expression_by_binary_improved.png
+│       │   ├── umap_gfp_expression_by_dox_improved.png
+│       │   ├── umap_plate_and_dox.png
+│       │   ├── umap_plate_batches_UMIs.png
+│       │   └── violin_gfp_expression_by_dox.png
+│       └── qc
+│           └── plots
+│               ├── gfp_normcount_vs_fluorescence.png
+│               ├── gfp_normcount_vs_fluorescence_by_dox.png
+│               ├── gfp_normcount_vs_fluorescence_dox_treated.png
+│               ├── gfp_rawcount_vs_fluorescence.png
+│               ├── ridge_gfp_expression_by_dox.png
+│               ├── ridge_gfp_fluorescence_by_dox.png
+│               ├── umap_dox_binary.png
+│               ├── umap_dox_binary_by_plate.png
+│               ├── umap_dox_concentration.png
+│               ├── umap_dox_concentration_faceted.png
+│               ├── umap_gfp_expression_95percentile.png
+│               ├── umap_gfp_expression_99percentile.png
+│               ├── umap_gfp_expression_by_binary_improved.png
+│               ├── umap_gfp_expression_by_dox_improved.png
+│               ├── umap_gfp_fluorescence.png
+│               ├── umap_gfp_fluorescence_by_dox.png
+│               ├── umap_plate_and_dox.png
+│               ├── umap_plate_batches_UMIs.png
+│               └── violin_gfp_expression_by_dox.png
+├── datasets
+│   ├── HEK_Rzepiela
+│   │   ├── GFP_counts.rds
+│   │   ├── counts.rds
+│   │   ├── filtered_feature_bc_matrix
+│   │   │   ├── barcodes.tsv.gz
+│   │   │   ├── features.tsv.gz
+│   │   │   └── matrix.mtx.gz
+│   │   └── raw_counts.rds
+│   ├── HEK_SS3
+│   │   ├── processed
+│   │   │   ├── biomart_protein_coding_ids.rds
+│   │   │   ├── cell_metadata.csv
+│   │   │   ├── cell_metadata.rds
+│   │   │   ├── combined_counts_filtered_UMIs.rds
+│   │   │   ├── gfp_correlation_data.csv
+│   │   │   ├── plots
+│   │   │   ├── sce_annotated.rds
+│   │   │   └── scran_normalized_linear.rds
+│   │   └── raw
+│   │       ├── P101_GFP_fluorescence.tsv
+│   │       ├── P103_GFP_fluorescence.tsv
+│   │       ├── P105_GFP_fluorescence.tsv
+│   │       ├── P32156_101.dgecounts.rds
+│   │       ├── P32156_101.genecounts.txt
+│   │       ├── P32156_101.well_barcodes.txt
+│   │       ├── P32156_103.dgecounts.rds
+│   │       ├── P32156_103.genecounts.txt
+│   │       ├── P32156_103.well_barcodes.txt
+│   │       ├── P32156_105.dgecounts.rds
+│   │       ├── P32156_105.genecounts.txt
+│   │       ├── P32156_105.well_barcodes.txt
+│   │       ├── cell_barcodes_filtered_101.txt
+│   │       ├── cell_barcodes_filtered_103.txt
+│   │       └── cell_barcodes_filtered_105.txt
+│   └── mESCs
+│       ├── final_counts.rds
+│       └── phenotype.csv
+├── resources
+│   ├── Targets_Negative_Control_mESCs.rds
+│   ├── Targets__combined_124-3p_124-3p.2_506-3p.rds
+│   ├── Targets__combined_124-3p_124-3p.2_506-3p_top100.rds
+│   ├── Targets__combined_124-3p_124-3p.2_506-3p_top1000.rds
+│   ├── Targets__combined_124-3p_124-3p.2_506-3p_top500.rds
+│   ├── Targets__miR-124-3p.rds
+│   ├── Targets__miR-124-3p_top100.rds
+│   ├── Targets__miR-124-3p_top1000.rds
+│   ├── Targets__miR-124-3p_top500.rds
+│   ├── Targets_combined_miR_199-5p_miR_199-3p.rds
+│   ├── Targets_combined_top3_families_mESCs.rds
+│   └── Targetscan_files
+│       ├── TargetScan8.0__miR-124-3p.1.Human.predicted_targets.txt
+│       ├── TargetScan8.0__miR-124-3p.2_506-3p.Human.predicted_targets.txt
+│       ├── human
+│       │   ├── TargetScan8.0__miR-199-3p.predicted_targets.txt
+│       │   └── TargetScan8.0__miR-199-5p.predicted_targets.txt
+│       └── mouse
+│           ├── TargetScan8.0__miR-1-3p_206-3p.predicted_targets.txt
+│           ├── TargetScan8.0__miR-122-5p.predicted_targets.txt
+│           ├── TargetScan8.0__miR-17-5p_20-5p_93-5p_106-5p.predicted_targets.txt
+│           ├── TargetScan8.0__miR-291-3p_294-3p_295-3p_302-3p.predicted_targets.txt
+│           ├── TargetScan8.0__miR-292a-3p_467a-5p.predicted_targets.txt
+│           └── TargetScan8.0__miR-9-5p.predicted_targets.txt
+├── scripts
+│   ├── HEK_Rzepiela
+│   │   ├── Basic_Rzepiela_analysis.Rmd
+│   │   ├── Prepare_Rzepiela_counts.R
+│   │   └── preprocess_targets.R
+│   ├── HEK_SS3
+│   │   ├── build_annotated_scran_dataset.R
+│   │   ├── gfp_fluorescence_qc.R
+│   │   ├── mir124_activity_gfp_correlation_by_cutoff.R
+│   │   └── scran_wrapper.sh
+│   └── mESCs
+│       ├── Target_approaches.Rmd
+│       ├── make_pairwise_cors.R
+│       ├── net_mESC.R
+│       └── preprocess_targets.R
+└── tree_dir.txt
+
+24 directories, 107 files
