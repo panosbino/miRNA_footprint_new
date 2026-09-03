@@ -12,7 +12,19 @@ mkdir -p "${TOOLS_DIR}"
 cd "${TOOLS_DIR}"
 
 echo "=== Cloning miReact ==="
-git clone https://github.com/muhligs/miReact.git
+if [ -d "${TOOLS_DIR}/miReact/.git" ]; then
+  echo "miReact already cloned at ${TOOLS_DIR}/miReact -- checking it's valid rather than re-cloning..."
+  if [ -f "${TOOLS_DIR}/miReact/data/tarbase.rds" ]; then
+    echo "Looks like a complete, valid clone (tarbase.rds present). Skipping clone step."
+  else
+    echo "ERROR: ${TOOLS_DIR}/miReact exists but looks INCOMPLETE (no data/tarbase.rds)."
+    echo "This is likely a partial clone from an interrupted earlier run. Remove it and re-run:"
+    echo "  rm -rf ${TOOLS_DIR}/miReact"
+    exit 1
+  fi
+else
+  git clone https://github.com/muhligs/miReact.git "${TOOLS_DIR}/miReact"
+fi
 
 echo "=== Setting up shared R library ==="
 mkdir -p "${TOOLS_DIR}/R_library"
