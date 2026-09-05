@@ -39,5 +39,15 @@ Rscript -e '
   devtools::install_github("muhligs/Regmex", dependencies = FALSE, lib = "'"${TOOLS_DIR}"'/R_library")
 '
 
+echo "=== Installing bayesReact into the SAME shared R library (not a separate location) ==="
+Rscript -e '
+  .libPaths(c("'"${TOOLS_DIR}"'/R_library", .libPaths()))
+  if (requireNamespace("bayesReact", quietly = TRUE, lib.loc = "'"${TOOLS_DIR}"'/R_library")) {
+    cat("bayesReact already installed -- skipping (re-run devtools::install_github manually if you need to update it)\n")
+  } else {
+    devtools::install_github("JakobSkouPedersenLab/bayesReact", dependencies = TRUE, lib = "'"${TOOLS_DIR}"'/R_library")
+  }
+'
+
 echo "=== Done. Add this to your .Renviron for the library to load automatically: ==="
 echo "R_LIBS_USER=${TOOLS_DIR}/R_library"
