@@ -13,7 +13,7 @@ R_library/
 # Large or raw data -- lives on Dardel filesystem, not GitHub
 datasets/*/raw/
 *.dgecounts.rds
-
+*hs.seqXmot.*.rds
 # Generated outputs -- regenerable from scripts, don't need version control
 
 # R/general junk
