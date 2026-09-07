@@ -20,3 +20,4 @@ datasets/*/raw/
 .Rhistory
 .Rproj.user/
 .DS_Store
+resources/hs.seqXmot.utr3_mrs_7mer.rds
