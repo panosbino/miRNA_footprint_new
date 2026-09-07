@@ -1,4 +1,6 @@
 library(tidyverse)
+library(future)
+library(furrr)
 
 # ---------------------------------------------------------------------------
 # REBUILT from scratch under the new miRNA_footprint_new structure. Run
@@ -37,10 +39,11 @@ dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 TARGET_MIRNA <- "hsa-miR-124-3p"
 GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
+N_WORKERS <- 8   # SET THIS to match your SLURM --cpus-per-task allocation
 
 # TODO: PLACEHOLDER, same unresolved item as depth_subsampling_scran_new.R --
 # confirm the real Utils.R path before running.
-source(file.path(BASE_DIR, "scripts/Utils.R"))  
+source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- UNVERIFIED PATH
 
 # --- Data: scran-normalized counts (precomputed, full dataset) -------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))
@@ -105,10 +108,15 @@ alpha <- 1e-10
 pval_row <- sco$pval.mat[mirna_idx, ]
 counts_row <- sco$motifCounts[mirna_idx, ]
 
-cat("Scoring", ncol(sco$exp), "cells for", TARGET_MIRNA, "...\n")
-mireact_score <- sapply(seq_len(ncol(sco$exp)), function(s) {
-  wcmod.p(pval_row[rank_order[, s]], counts_row[rank_order[, s]], alpha)
-})
+cat("Scoring", ncol(sco$exp), "cells for", TARGET_MIRNA, "(parallelized,", N_WORKERS, "workers) ...\n")
+plan(multisession, workers = N_WORKERS)
+mireact_score <- future_map_dbl(
+  seq_len(ncol(sco$exp)),
+  function(s) wcmod.p(pval_row[rank_order[, s]], counts_row[rank_order[, s]], alpha),
+  .options = furrr_options(seed = 1312)   # wcmod.p() is deterministic (no internal randomness,
+)                                          # unlike scran's clustering) -- seed included for
+                                           # consistency with project convention, not because
+                                           # it's load-bearing for correctness here.
 names(mireact_score) <- colnames(sco$exp)
 mireact_score <- mireact_score * -1   # sign convention, per wrapper3.R
 
@@ -158,50 +166,3 @@ saveRDS(list(our_targetscan = our_cor_df, our_tarbase = our_tarbase_cor_df, mire
              n_targets_matched_mireact = n_nonzero_targets, sign_check_rho = sign_check$estimate,
              normalization = "scran"),
         file.path(OUT_DIR, "res_mireact_comparison_scran.rds"))
-
-set.seed(1)
-tarbase_matched_size <- sample(tarbase_gids, length(targets_top))
-matched_activity <- calculate_activity(counts = counts, targets = tarbase_matched_size)
-matched_df <- data.frame(activity = matched_activity) |> rownames_to_column("Cell_ID")
-matched_cor_df <- merge(matched_df, GFP_counts, by = "Cell_ID")
-matched_cor_df <- matched_cor_df[matched_cor_df$eGFP < gfp_upper_cutoff, ]
-cor.test(matched_cor_df$activity, matched_cor_df$eGFP, method = "spearman")
-
-
-targets_all <- intersect(targetscan_all$ensembl_gene_id, rownames(counts))
-
-# --- Our method (aggregative), scran-normalized, TargetScan targets --------
-our_activity_all <- calculate_activity(counts = counts, targets = targets_all)
-our_activity_all <- data.frame(activity = our_activity_all) |> rownames_to_column("Cell_ID")
-our_cor_df_all <- merge(our_activity_all, GFP_counts, by = "Cell_ID")
-our_cor_df_all <- our_cor_df_all[our_cor_df_all$eGFP < gfp_upper_cutoff, ]
-our_cor_df_all <- our_cor_df_all[is.finite(our_cor_df_all$activity) & is.finite(our_cor_df_all$eGFP), ]
-our_cor_all <- cor.test(our_cor_df_all$activity, our_cor_df_all$eGFP, method = "spearman", exact = FALSE)
-cat(sprintf("Our method (scran, TargetScan): rho = %.3f, p = %.3e, n = %d\n",
-            our_cor_all$estimate, our_cor_all$p.value, nrow(our_cor_df_all)))
-
-NEGATIVE_CONTROL_MIRNA <- "hsa-miR-122-5p"  # liver-specific; adjust exact TarBase naming if needed
-
-tar_neg <- tar[tar$mirna == NEGATIVE_CONTROL_MIRNA & tar$species == "Homo sapiens" &
-                 tar$up_down == "DOWN" & !is.na(tar$up_down), ]
-cat(sprintf("%s TarBase DOWN targets: %d unique symbols (vs %d for miR-124-3p -- should be a similar order of magnitude for a fair test)\n",
-            NEGATIVE_CONTROL_MIRNA, length(unique(tar_neg$geneName)), length(tarbase_symbols)))
-
-# Same wcmod.p scoring machinery, just swapping which gene set counts as "1"
-neg_symbols <- unique(sub("\\(hsa\\)$", "", tar_neg$geneName))
-neg_gids <- intersect(sco$seqs$gid[match(neg_symbols, sco$seqs$gsym)], rownames(sco$exp))
-counts_row_neg <- as.numeric(rownames(sco$exp) %in% neg_gids)
-pval_row_neg <- rep(0.01, length(counts_row_neg))  # tarbaserun-mode constant, same as the real run
-
-neg_score <- sapply(seq_len(ncol(sco$exp)), function(s) {
-  wcmod.p(pval_row_neg[rank_order[, s]], counts_row_neg[rank_order[, s]], alpha)
-})
-names(neg_score) <- colnames(sco$exp)
-neg_score <- neg_score * -1
-
-neg_df <- data.frame(neg_activity = neg_score) |> rownames_to_column("Cell_ID")
-neg_cor_df <- merge(neg_df, GFP_counts, by = "Cell_ID")
-neg_cor_df <- neg_cor_df[neg_cor_df$eGFP < gfp_upper_cutoff, ]
-neg_cor_df <- neg_cor_df[is.finite(neg_cor_df$neg_activity) & is.finite(neg_cor_df$eGFP), ]
-cor.test(neg_cor_df$neg_activity, neg_cor_df$eGFP, method = "spearman")
-
