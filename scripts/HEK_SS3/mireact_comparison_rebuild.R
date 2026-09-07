@@ -43,7 +43,7 @@ N_WORKERS <- 8   # SET THIS to match your SLURM --cpus-per-task allocation
 
 # TODO: PLACEHOLDER, same unresolved item as depth_subsampling_scran_new.R --
 # confirm the real Utils.R path before running.
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- UNVERIFIED PATH
+source(file.path(BASE_DIR, "scripts/Utils.R"))  
 
 # --- Data: scran-normalized counts (precomputed, full dataset) -------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))

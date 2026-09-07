@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=mireact_comparison
-#SBATCH --account=naiss2024-6-235
+#SBATCH --account=naiss2026-3-153
 #SBATCH --partition=shared
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=8
@@ -18,7 +18,7 @@
 # Still never actually timed, though. --cpus-per-task=8 must match
 # N_WORKERS in the R script itself (currently also 8) -- if you change one,
 # change the other, they don't sync automatically.
+ml PDC
+module load R 
 
-module load R  # confirm exact module name/version -- guessed, not verified
-
-Rscript /cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new/scripts/HEK_SS3/comparisons/mireact_comparison_rebuild.R
+Rscript /cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new/scripts/HEK_SS3/mireact_comparison_rebuild.R
