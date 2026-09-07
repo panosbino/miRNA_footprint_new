@@ -17,7 +17,7 @@ SEED_MOTIF <- "GTGCCTT"   # same motif derived/cross-validated earlier for bayes
 GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
 
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- same unverified placeholder as other scripts
+source(file.path(BASE_DIR, "scripts/Utils.R"))  # <-- same unverified placeholder as other scripts
 
 tracking_path <- file.path(OUT_DIR, "mireact_default_job_tracking.rds")
 if (!file.exists(tracking_path)) {
