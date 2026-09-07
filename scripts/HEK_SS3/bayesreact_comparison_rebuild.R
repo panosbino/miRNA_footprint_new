@@ -48,7 +48,7 @@ GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
 
 # TODO: same unresolved placeholder as the other rebuilt scripts.
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- UNVERIFIED PATH
+source(file.path(BASE_DIR, "scripts/Utils.R")) 
 
 # --- Data: scran-normalized counts + GFP ------------------------------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))
