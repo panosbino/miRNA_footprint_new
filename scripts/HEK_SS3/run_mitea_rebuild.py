@@ -62,26 +62,39 @@ out_mirtarbase = pd.DataFrame({"Cell_ID": mirtarbase_score.index, "mitea_activit
 out_mirtarbase.to_csv(f"{MITEA_INPUT_DIR}/mitea_activity_scores_mirtarbase_scran.csv", index=False)
 print(f"Wrote mitea_activity_scores_mirtarbase_scran.csv ({out_mirtarbase['mitea_activity'].notna().sum()} non-NaN)")
 
-# --- (2) TarBase scoring, bypassing built-in target loading -----------------
-with open(f"{MITEA_INPUT_DIR}/tarbase_124_targets.txt") as f:
-    tarbase_targets = [line.strip() for line in f if line.strip()]
+# --- (2)-(4) Custom target-list scoring, bypassing built-in target loading --
+# Factored into one function, called for TarBase, TargetScan-all, and
+# TargetScan-top200 -- avoids duplicating this loop three times, same
+# principle as compute_rho_for_genes() in the R scripts throughout this
+# project (duplicated logic is exactly how the earlier 30:i-vs-1:i bug
+# crept in).
+def score_custom_targets(target_file, label, output_suffix, output_colname):
+    with open(f"{MITEA_INPUT_DIR}/{target_file}") as f:
+        targets = [line.strip() for line in f if line.strip()]
 
-tarbase_targets_in_data = [g for g in tarbase_targets if g in counts_norm.index]
-print(f"TarBase targets: {len(tarbase_targets)} total, {len(tarbase_targets_in_data)} present in expression matrix")
+    targets_in_data = [g for g in targets if g in counts_norm.index]
+    print(f"{label} targets: {len(targets)} total, {len(targets_in_data)} present in expression matrix")
 
-mti_data_tarbase = pd.DataFrame({
-    "miRNA": [TARGET_MIRNA] * len(tarbase_targets_in_data),
-    "Target Gene": tarbase_targets_in_data,
-})
+    mti_data_custom = pd.DataFrame({
+        "miRNA": [TARGET_MIRNA] * len(targets_in_data),
+        "Target Gene": targets_in_data,
+    })
 
-tarbase_pvals = {}
-for cell in counts_norm.columns:
-    ranked = counts_norm.loc[:, cell].sort_values()
-    _, _, pvals_row, _ = compute_stats_per_cell(cell, ranked, [TARGET_MIRNA], mti_data_tarbase, debug=False)
-    tarbase_pvals[cell] = pvals_row[0]
+    pvals = {}
+    for cell in counts_norm.columns:
+        ranked = counts_norm.loc[:, cell].sort_values()
+        _, _, pvals_row, _ = compute_stats_per_cell(cell, ranked, [TARGET_MIRNA], mti_data_custom, debug=False)
+        pvals[cell] = pvals_row[0]
 
-tarbase_pvals = pd.Series(tarbase_pvals)
-tarbase_score = score_and_check(tarbase_pvals, "TarBase")
-out_tarbase = pd.DataFrame({"Cell_ID": tarbase_score.index, "mitea_activity_tarbase": tarbase_score.values})
-out_tarbase.to_csv(f"{MITEA_INPUT_DIR}/mitea_activity_scores_tarbase_scran.csv", index=False)
-print(f"Wrote mitea_activity_scores_tarbase_scran.csv ({out_tarbase['mitea_activity_tarbase'].notna().sum()} non-NaN)")
+    pvals = pd.Series(pvals)
+    score = score_and_check(pvals, label)
+    out_df = pd.DataFrame({"Cell_ID": score.index, output_colname: score.values})
+    out_path = f"{MITEA_INPUT_DIR}/mitea_activity_scores_{output_suffix}_scran.csv"
+    out_df.to_csv(out_path, index=False)
+    print(f"Wrote {out_path} ({out_df[output_colname].notna().sum()} non-NaN)")
+    return out_df
+
+
+score_custom_targets("tarbase_124_targets.txt", "TarBase", "tarbase", "mitea_activity_tarbase")
+score_custom_targets("targetscan_all_124_targets.txt", "TargetScan (all)", "targetscan_all", "mitea_activity_targetscan_all")
+score_custom_targets("targetscan_top200_124_targets.txt", "TargetScan (top 200)", "targetscan_top200", "mitea_activity_targetscan_top200")

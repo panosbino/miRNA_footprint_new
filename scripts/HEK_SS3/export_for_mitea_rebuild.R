@@ -14,7 +14,7 @@ OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 MITEA_INPUT_DIR <- file.path(OUT_DIR, "mitea_input")
 dir.create(file.path(MITEA_INPUT_DIR, "counts_data"), recursive = TRUE, showWarnings = FALSE)
 
-source(file.path(BASE_DIR, "scripts/Utils.R"))  
+source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- same unverified placeholder as other scripts
 
 # --- Scran-normalized counts -------------------------------------------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))
@@ -64,3 +64,25 @@ cat(sprintf("TarBase hsa-miR-124-3p DOWN targets: %d unique gene symbols\n", len
 
 writeLines(tarbase_symbols, file.path(MITEA_INPUT_DIR, "tarbase_124_targets.txt"))
 cat(sprintf("Wrote %s (%d symbols)\n", file.path(MITEA_INPUT_DIR, "tarbase_124_targets.txt"), length(tarbase_symbols)))
+
+# --- TargetScan targets, both full candidate list and top-200 --------------
+# Reuses gid_to_gsym (already built above for the counts relabeling) --
+# same mapping table, not a separately-derived one, for consistency with
+# every other identifier-mapping step in this project.
+N_TOP_TARGETS <- 200
+targetscan_all <- readRDS(file.path(BASE_DIR, "resources/Targets__combined_124-3p_124-3p.2_506-3p.rds"))
+targetscan_sorted <- targetscan_all[order(targetscan_all$Cumulative.weighted.context...score), ]
+targets_top200_gid <- targetscan_sorted[1:N_TOP_TARGETS, ]$ensembl_gene_id
+
+targetscan_all_symbols <- unique(na.omit(gid_to_gsym$gsym[match(targetscan_all$ensembl_gene_id, gid_to_gsym$gid)]))
+targetscan_top200_symbols <- unique(na.omit(gid_to_gsym$gsym[match(targets_top200_gid, gid_to_gsym$gid)]))
+
+cat(sprintf("TargetScan ALL candidates: %d Ensembl IDs -> %d unique gene symbols (%d lost in mapping)\n",
+            nrow(targetscan_all), length(targetscan_all_symbols), nrow(targetscan_all) - length(targetscan_all_symbols)))
+cat(sprintf("TargetScan TOP %d: %d Ensembl IDs -> %d unique gene symbols (%d lost in mapping)\n",
+            N_TOP_TARGETS, length(targets_top200_gid), length(targetscan_top200_symbols),
+            length(targets_top200_gid) - length(targetscan_top200_symbols)))
+
+writeLines(targetscan_all_symbols, file.path(MITEA_INPUT_DIR, "targetscan_all_124_targets.txt"))
+writeLines(targetscan_top200_symbols, file.path(MITEA_INPUT_DIR, "targetscan_top200_124_targets.txt"))
+cat("Wrote targetscan_all_124_targets.txt and targetscan_top200_124_targets.txt\n")
