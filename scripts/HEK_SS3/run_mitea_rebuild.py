@@ -42,9 +42,20 @@ def score_and_check(pvals, label):
 
 
 # --- (1) Native miRTarBase scoring -------------------------------------------
+# cpus explicitly capped to the REAL interactive allocation (8), not left
+# as the default None. Very likely cause of the earlier BrokenPipeError /
+# ForkPoolWorker-90 crash: cpus=None probably falls back to something like
+# os.cpu_count(), which on a shared HPC node reports the PHYSICAL node's
+# total core count, not what's actually allocated to this session --
+# causing massive oversubscription (many more workers spawned than real
+# cores available) and processes getting killed under resource pressure.
+N_CPUS = 8   # MATCH YOUR ACTUAL ALLOCATION -- if you request more/fewer
+             # cores for a future run, update this to match, don't leave
+             # it out of sync with the real session/job allocation.
+
 miR_list, miR_activity_pvals = compute_mir_activity(
     counts_norm, results_path=RESULTS_PATH, miR_list=[TARGET_MIRNA],
-    species="homo_sapiens", debug=True,
+    species="homo_sapiens", debug=True, cpus=N_CPUS,
 )
 mirtarbase_score = score_and_check(miR_activity_pvals.loc[TARGET_MIRNA], "miRTarBase")
 out_mirtarbase = pd.DataFrame({"Cell_ID": mirtarbase_score.index, "mitea_activity": mirtarbase_score.values})
