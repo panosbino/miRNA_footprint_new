@@ -14,7 +14,7 @@ OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 MITEA_INPUT_DIR <- file.path(OUT_DIR, "mitea_input")
 dir.create(file.path(MITEA_INPUT_DIR, "counts_data"), recursive = TRUE, showWarnings = FALSE)
 
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- same unverified placeholder as other scripts
+source(file.path(BASE_DIR, "scripts/Utils.R"))  
 
 # --- Scran-normalized counts -------------------------------------------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))
