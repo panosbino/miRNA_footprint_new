@@ -328,7 +328,7 @@ depth_results <- future_map_dfr(
 
 result_suffix <- if (QUICK_TEST_MODE) "_QUICKTEST" else ""
 saveRDS(depth_results, file.path(OUT_DIR, sprintf("res_depth_subsampling_scran_n%d%s.rds", FIXED_N, result_suffix)))
-
+depth_results <- readRDS("~/Desktop/Projects/miRNA_footprint_new/analysis/HEK_SS3/depth_subsampling_scran/res_depth_subsampling_scran_n100.rds")
 # --- Failure / NA accounting (explicit) -------------------------------------
 cat("\n=== scran failure rate (scran itself erroring, distinct from ordinary NA) ===\n")
 depth_results |>
@@ -373,9 +373,7 @@ p_rho <- ggplot(depth_results, aes(x = factor(target_depth), y = rho)) +
   theme(panel.grid.minor = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1)) +
   ylim(y_limits[1], y_limits[2]) +
   labs(x = "Target reads per cell (downsampled; evenly-spaced categories)", y = "Spearman rho",
-       title = sprintf("Prediction accuracy vs. sequencing depth (scran, fixed n=%d cells)", FIXED_N),
-       subtitle = sprintf("Each box = %d draws. Numbers above each box = mean number of the 200 TargetScan targets\nthat actually survived the protein-coding + zero-filter at that depth (n_targets_used) -- NOT\ncomparable across depths where this is small. Check the scran failure-rate table above too.",
-                           N_ITER))
+       title = sprintf("Prediction accuracy vs. sequencing depth (scran, fixed n=%d cells)", FIXED_N))
 
 print(p_rho)
 ggsave(file.path(OUT_DIR, "plots", sprintf("depth_subsampling_rho_scran_n%d%s.pdf", FIXED_N, result_suffix)),
