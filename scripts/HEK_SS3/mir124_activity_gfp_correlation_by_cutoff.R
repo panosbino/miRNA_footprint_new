@@ -57,7 +57,7 @@ METADATA_PATH <- file.path(PROJECT_ROOT, "datasets", "HEK_SS3", "processed", "gf
 # used in the source Rmd this script was ported from, which looked like a
 # one-off typo rather than your project's actual naming convention. Update
 # this to the real filename once the miR-124 target set is in place.
-TARGETS_PATH  <- file.path(PROJECT_ROOT, "resources", "Targets__combined_124-3p_124-3p.2_506-3p.rds")
+TARGETS_PATH  <- file.path(PROJECT_ROOT, "resources/human", "Targets__combined_124-3p_124-3p.2_506-3p.rds")
 
 # New subfolder, not yet in the project tree -- created on first run.
 OUTPUT_DIR    <- file.path(PROJECT_ROOT, "analysis", "HEK_SS3", "mir124_activity_gfp")
@@ -251,11 +251,11 @@ ggsave(file.path(PLOT_DIR, "mir124_activity_vs_GFP_all_cutoffs_grid.png"),
 # computed on the log10(GFP + 1) scale actually plotted.
 spearman_df <- bind_rows(all_spearman_stats) %>%
   mutate(method = "spearman", estimate = spearman_rho, p_value = spearman_p) %>%
-  select(gfp_type, cutoff, method, estimate, p_value, n_cells)
+  dplyr::select(gfp_type, cutoff, method, estimate, p_value, n_cells)
 
 pearson_df <- bind_rows(all_pearson_stats) %>%
   mutate(method = "pearson", estimate = pearson_r, p_value = pearson_p) %>%
-  select(gfp_type, cutoff, method, estimate, p_value, n_cells)
+  dplyr::select(gfp_type, cutoff, method, estimate, p_value, n_cells)
 
 stats_df <- bind_rows(spearman_df, pearson_df) %>%
   arrange(cutoff, gfp_type, method)
