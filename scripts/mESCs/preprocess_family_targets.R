@@ -19,7 +19,7 @@ library(biomaRt)
 # did).
 # ---------------------------------------------------------------------------
 
-BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- "~/Desktop/Projects/miRNA_footprint_new"
 setwd(BASE_DIR)
 
 # useEnsembl(), not the deprecated useMart() -- same fix already established
