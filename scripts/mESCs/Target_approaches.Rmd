@@ -29,8 +29,8 @@ calculate_activity = function(counts_df, targets, mESC_data = T) {
 
 
 ```{r}
-setwd("~/Desktop/microIMP_for_Vi/mESC_inhouse/")
-pheno = read.delim("./Data/phenotype.csv", sep = ",")
+setwd("~/Desktop/Projects/miRNA_footprint_new/")
+pheno = read.delim("./datasets/mESC/", sep = ",")
 # Change the name from WT to controls as it is more accurate
 pheno$Exp[pheno$Exp == "WT"] = "Control" 
 # Find the KO and control cells
