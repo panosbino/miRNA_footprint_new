@@ -1,10 +1,10 @@
 library(tidyverse)
 
 BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
-OUT_DIR <- file.path(BASE_DIR, "analysis/mESCs/KO_control_separation")
+OUT_DIR <- file.path(BASE_DIR, "analysis/mESCs")
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
-source(file.path(BASE_DIR, "scripts/HEK_SS3/comparisons/mESC_separation_utils.R"))
+source(file.path(BASE_DIR, "scripts/mESCs/mESC_separation_utils.R"))
 
 # --- Data (exactly matching separate_KO_control.R's loading) ---------------
 setwd(BASE_DIR)
