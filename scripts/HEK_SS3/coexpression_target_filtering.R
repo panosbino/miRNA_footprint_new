@@ -33,10 +33,9 @@ GFP_UPPER_PCT <- 0.99
 CORR_THRESHOLD <- 0.4
 MIN_DEGREE <- 3
 
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- same unverified placeholder as other rebuilt scripts
-
+source(file.path(BASE_DIR, "scripts/Utils.R"))  
 # --- Compile the C++ correlation function -----------------------------------
-sourceCpp(file.path(BASE_DIR, "scripts/HEK_SS3/fullSpearman.cpp"))  # adjust path to wherever you place the .cpp file
+sourceCpp(file.path(BASE_DIR, "scripts/fullSpearman.cpp")) 
 
 # --- MANDATORY VALIDATION: does this match R's own Spearman convention? ----
 # The C++ rank function explicitly does NOT average-rank ties (confirmed by

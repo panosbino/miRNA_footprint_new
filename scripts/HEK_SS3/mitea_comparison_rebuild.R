@@ -9,7 +9,7 @@ MITEA_INPUT_DIR <- file.path(OUT_DIR, "mitea_input")
 GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
 
-source(file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R"))  # <-- same unverified placeholder as other scripts
+source(file.path(BASE_DIR, "scripts/Utils.R"))  # <-- same unverified placeholder as other scripts
 
 # --- Data --------------------------------------------------------------------
 counts <- readRDS(file.path(PROCESSED_DIR, "scran_normalized_linear.rds"))
