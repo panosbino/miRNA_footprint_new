@@ -60,9 +60,31 @@ targets_mir292 <- readRDS("resources/mouse/Targets_MIR292_mESCs.rds")
 cat(sprintf("Per-family target lists: MIR17=%d, MIR291=%d, MIR292=%d genes\n",
             nrow(targets_mir17), nrow(targets_mir291), nrow(targets_mir292)))
 
+# Top-200 per family, same convention as the combined top-200 above (already
+# sorted ascending by Cumulative.weighted.context...score in
+# preprocess_family_targets.R, so slice_head(n=200) takes the strongest 200).
+# Defensive check: don't assume every family actually has >= 200 targets.
+top200_per_family <- function(targets_df, fam_name) {
+  n_available <- nrow(targets_df)
+  if (n_available < 200) {
+    cat(sprintf("*** WARNING: %s has only %d targets, fewer than 200 -- top200 variant will use all %d ***\n",
+                fam_name, n_available, n_available))
+  }
+  targets_df %>% slice_head(n = min(200, n_available))
+}
+targets_mir17_top200 <- top200_per_family(targets_mir17, "MIR17")
+targets_mir291_top200 <- top200_per_family(targets_mir291, "MIR291")
+targets_mir292_top200 <- top200_per_family(targets_mir292, "MIR292")
+cat(sprintf("Per-family top-200: MIR17=%d, MIR291=%d, MIR292=%d genes\n",
+            nrow(targets_mir17_top200), nrow(targets_mir291_top200), nrow(targets_mir292_top200)))
+
 our_mir17_activity <- calculate_activity_ko_normalized(counts, targets_mir17$ensembl_gene_id)
 our_mir291_activity <- calculate_activity_ko_normalized(counts, targets_mir291$ensembl_gene_id)
 our_mir292_activity <- calculate_activity_ko_normalized(counts, targets_mir292$ensembl_gene_id)
+
+our_mir17_top200_activity <- calculate_activity_ko_normalized(counts, targets_mir17_top200$ensembl_gene_id)
+our_mir291_top200_activity <- calculate_activity_ko_normalized(counts, targets_mir291_top200$ensembl_gene_id)
+our_mir292_top200_activity <- calculate_activity_ko_normalized(counts, targets_mir292_top200$ensembl_gene_id)
 
 # --- Compute, report, plot, and save -- looped over all six variants -------
 variants <- list(
@@ -71,15 +93,21 @@ variants <- list(
   negctrl  = our_negctrl_activity,
   MIR17    = our_mir17_activity,
   MIR291   = our_mir291_activity,
-  MIR292   = our_mir292_activity
+  MIR292   = our_mir292_activity,
+  MIR17_top200  = our_mir17_top200_activity,
+  MIR291_top200 = our_mir291_top200_activity,
+  MIR292_top200 = our_mir292_top200_activity
 )
 variant_labels <- list(
   all      = "Our method, all targets",
   top200   = "Our method, top 200 targets",
   negctrl  = "Our method, NEGATIVE CONTROL (miRNAs not in mESCs)",
-  MIR17    = "Our method, MIR-17 family only",
-  MIR291   = "Our method, MIR-291 family only",
-  MIR292   = "Our method, MIR-292 family only"
+  MIR17    = "Our method, MIR-17 family only (all targets)",
+  MIR291   = "Our method, MIR-291 family only (all targets)",
+  MIR292   = "Our method, MIR-292 family only (all targets)",
+  MIR17_top200  = "Our method, MIR-17 family only (top 200)",
+  MIR291_top200 = "Our method, MIR-291 family only (top 200)",
+  MIR292_top200 = "Our method, MIR-292 family only (top 200)"
 )
 
 sep_results <- list()
