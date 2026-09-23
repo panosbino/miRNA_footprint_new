@@ -31,7 +31,7 @@ for (v in names(variants)) {
 cat("\nExpectation: negative control should show near-zero separation -- check this before trusting the combined result above.\n")
 
 for (v in names(variants)) {
-  p <- plot_separation(sep_results[[v]], variant_labels[[v]])
+  p <- plot_separation(sep_results[[v]], variant_labels[[v]]) + xlim(c(-2, 25))
   print(p)
   ggsave(file.path(OUT_DIR, sprintf("separation_mitea_%s.pdf", v)), p, width = 7, height = 6)
 }
