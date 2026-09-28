@@ -1,0 +1,5 @@
+variant,n_member_mirnas_found,n_mti_rows,n_unique_targets,n_targets_in_data
+MIR17,6,91,48,38
+MIR291,8,20,11,10
+MIR292,2,3,2,2
+combined,16,114,61,50
