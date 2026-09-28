@@ -1,6 +1,8 @@
 library(tidyverse)
 
-BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
+#BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- "~/Desktop/Projects/miRNA_footprint_new/"
+
 OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 
 # ---------------------------------------------------------------------------

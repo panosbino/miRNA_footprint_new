@@ -246,6 +246,23 @@ combined <- wrap_plots(all_plots, ncol = length(gfp_readouts)) +
 ggsave(file.path(PLOT_DIR, "mir124_activity_vs_GFP_all_cutoffs_grid.png"),
        combined, width = 18, height = 6 * length(CUTOFFS), dpi = 300, limitsize = FALSE)
 
+combined[1] |> 
+  as.data.frame() |>
+  ggplot() + 
+  geom_point(aes(y = data.activity,x = log10(data.GFP)),fill = "#4cadad" , size = 3, shape = 21, color = "#008a8a" ) +
+  labs(
+    title = paste0(
+      "Log10 GFP vs. Log10 miR-124 counts\n",
+      "Spearman \u03c1 = X"
+    ),
+    x = "log10 GFP",
+    y = "miRNA activity score"
+  ) +
+  theme_bw(base_size = 13) +
+  theme(
+    plot.title = element_text(hjust = 0.5)
+  )
+
 ## ---- Summary table of all correlations ---------------------------------------
 # One row per (cutoff, gfp_type) for each method -- Spearman and Pearson both
 # computed on the log10(GFP + 1) scale actually plotted.

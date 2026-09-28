@@ -38,12 +38,14 @@ our_res <- safe_read(file.path(OUT_DIR, "res_our_method_separation.rds"))
 bayesreact_res <- safe_read(file.path(OUT_DIR, "res_bayesreact_separation.rds"))
 mireact_res <- safe_read(file.path(OUT_DIR, "res_mireact_separation.rds"))
 mitea_res <- safe_read(file.path(OUT_DIR, "res_mitea_separation.rds"))
+mitea_mirtarbase_res <- safe_read(file.path(OUT_DIR, "res_mitea_mirtarbase_separation.rds"))
 
 all_results <- bind_rows(
   flatten_results(our_res, "Our method"),
   flatten_results(bayesreact_res, "bayesReact"),
   flatten_results(mireact_res, "miReact"),
-  flatten_results(mitea_res, "miTEA-HiRes")
+  flatten_results(mitea_res, "miTEA-HiRes (TargetScan lists)"),
+  flatten_results(mitea_mirtarbase_res, "miTEA-HiRes (miRTarBase)")
 )
 
 if (nrow(all_results) == 0) stop("No result files found -- check OUT_DIR and that at least one method has been run.")

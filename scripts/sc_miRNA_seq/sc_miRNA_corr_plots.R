@@ -89,7 +89,7 @@ p1_all <- ggplot(
   df_all,
   aes(x = log10(gfp + 1), y = log10(value + 1))
 ) +
-  geom_point(fill = "lightblue", size = 3, shape = 21, color = "black") +
+  geom_point(fill = "#7996ec" , size = 3, shape = 21, color = "#406ae4") +
   labs(
     title = paste0(
       "Log10 GFP vs. Log10 miR-124 counts\n",
@@ -217,4 +217,8 @@ combined_plot
 
 ggsave(plot = combined_plot, width = 12, height = 8,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor.png", device = "png")
 ggsave(plot = combined_plot, width = 12, height = 8,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor.pdf", device = "pdf")
+
+
+ggsave(plot = p1_all, width = 4, height = 4,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor_log_log.pdf", device = "pdf")
+
 
