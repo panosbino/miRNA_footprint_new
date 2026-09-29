@@ -3,13 +3,19 @@ using namespace Rcpp;
 
 // [[Rcpp::depends(RcppArmadillo)]]
 
-// Rank a single vector (no ties handled specially)
+// Rank a vector, giving tied values their average rank (matches R's rank(ties.method = "average"))
 arma::vec rank_vec(const arma::vec &x) {
-    arma::uvec idx = sort_index(x);
-    arma::vec r(x.n_elem);
+    const arma::uword n = x.n_elem;
+    arma::uvec idx = arma::stable_sort_index(x);
+    arma::vec r(n);
 
-    for (size_t i = 0; i < x.n_elem; i++) {
-        r(idx[i]) = i + 1;
+    arma::uword i = 0;
+    while (i < n) {
+        arma::uword j = i;
+        while (j + 1 < n && x(idx(j + 1)) == x(idx(i))) j++;   // extend over the run of ties
+        double avg_rank = (i + j) / 2.0 + 1.0;                 // average of ranks i+1 .. j+1
+        for (arma::uword k = i; k <= j; k++) r(idx(k)) = avg_rank;
+        i = j + 1;
     }
     return r;
 }
@@ -17,18 +23,11 @@ arma::vec rank_vec(const arma::vec &x) {
 // [[Rcpp::export]]
 arma::mat spearman_full_cpp(const arma::mat &X) {
     // X: genes x samples (each row = gene)
-    size_t n_genes = X.n_rows;
-
-    // Allocate rank matrix
-    arma::mat R(n_genes, X.n_cols);
-
-    // Rank each gene (row)
-    for (size_t i = 0; i < n_genes; i++) {
+    arma::mat R(X.n_rows, X.n_cols);
+    for (arma::uword i = 0; i < X.n_rows; i++) {
         R.row(i) = rank_vec(X.row(i).t()).t();
     }
-
-    // Compute correlation on rank matrix
-    arma::mat C = arma::cor(R.t());   // returns samples x samples, so transpose input!
-
-    return C;
+    // arma::cor correlates columns; R.t() is samples x genes,
+    // so the result is genes x genes (gene-gene Spearman matrix)
+    return arma::cor(R.t());
 }
