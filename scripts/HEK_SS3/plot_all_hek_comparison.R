@@ -1,7 +1,8 @@
 library(tidyverse)
 
 #BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
-BASE_DIR <- "~/Desktop/Projects/miRNA_footprint_new/"
+BASE_DIR <- Sys.getenv("MIRNA_BASE_DIR", "~/Desktop/Projects/miRNA_footprint_new/")
+source(file.path(BASE_DIR, "scripts/Utils.R"))   # for plot_stratified()
 
 OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 
@@ -24,7 +25,8 @@ safe_read <- function(path) {
 }
 
 is_cor_test_like <- function(x) {
-  is.list(x) && !is.null(x$estimate) && !is.null(x$p.value) && is.numeric(x$estimate)
+  # Skip data frames (e.g. the new stratified/paired tibbles): probing them with $estimate warns.
+  is.list(x) && !is.data.frame(x) && !is.null(x$estimate) && !is.null(x$p.value) && is.numeric(x$estimate)
 }
 
 extract_all_cors <- function(rds_obj, source_label) {
@@ -80,7 +82,10 @@ all_results <- all_results %>%
 y_limits <- c(min(0, floor(min(all_results$rho, na.rm = TRUE) * 10) / 10),
               max(1, ceiling(max(all_results$rho, na.rm = TRUE) * 10) / 10))
 
-p_all <- ggplot(all_results, aes(x = reorder(label, rho), y = rho, fill = source)) +
+# "Our method" is stored in every file under the same label; without de-duplication
+# geom_col stacks the copies (~3.07 tall) and ylim() silently drops the excess.
+plot_data <- all_results %>% distinct(label, .keep_all = TRUE)
+p_all <- ggplot(plot_data, aes(x = reorder(label, rho), y = rho, fill = source)) +
   geom_col(width = 0.65) +
   geom_text(aes(label = sprintf("%.3f", rho), y = rho + 0.03), size = 3.8) +
   ylim(y_limits[1], y_limits[2]) +
@@ -114,3 +119,23 @@ if (nrow(default_data) > 0) {
 
 saveRDS(all_results, file.path(OUT_DIR, "res_all_tools_comparison_combined.rds"))
 cat(sprintf("\nSaved plots and combined table to %s\n", OUT_DIR))
+
+# ---------------------------------------------------------------------------
+# Stratified results ({GFP mRNA, fluorescence} x {all, induced}), present only
+# in .rds files written by the updated tool scripts. For results from older
+# runs, use reevaluate_saved_results_stratified.R instead (no tool reruns).
+# ---------------------------------------------------------------------------
+stratified_all <- bind_rows(lapply(list(mireact_tarbase, bayesreact_res, mireact_default, mitea_res),
+                                   function(x) if (!is.null(x)) x$stratified))
+if (nrow(stratified_all) > 0) {
+  # "Our method" is evaluated in every script on the same cells -> keep one copy.
+  stratified_all <- distinct(stratified_all, method, readout, cell_set, .keep_all = TRUE)
+  p_strat <- plot_stratified(stratified_all)
+  print(p_strat)
+  n_methods <- n_distinct(stratified_all$method)
+  ggsave(file.path(OUT_DIR, "comparison_stratified.pdf"), p_strat, width = 12, height = 1.5 + 0.9 * n_methods)
+  write.csv(stratified_all, file.path(OUT_DIR, "comparison_stratified.csv"), row.names = FALSE)
+  cat(sprintf("Saved stratified comparison (%d methods) to %s\n", n_methods, OUT_DIR))
+} else {
+  cat("No stratified results inside the .rds files (older runs) -- run reevaluate_saved_results_stratified.R.\n")
+}
