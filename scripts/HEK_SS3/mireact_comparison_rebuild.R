@@ -27,9 +27,10 @@ library(furrr)
 #     never forced) but flagged in case behavior differs on this R version.
 # ---------------------------------------------------------------------------
 
-BASE_DIR <- "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- Sys.getenv("MIRNA_BASE_DIR", "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new")
 TOOLS_DIR <- file.path(BASE_DIR, "tools")
 MIREACT_DIR <- file.path(TOOLS_DIR, "miReact")
+N_BOOT <- 1000   # bootstrap resamples for the stratified GFP evaluation
 PROCESSED_DIR <- file.path(BASE_DIR, "datasets/HEK_SS3/processed")
 OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
@@ -161,8 +162,30 @@ cat(sprintf("Our method, TargetScan: rho = %.3f (n=%d)\n", our_cor$estimate, nro
 cat(sprintf("Our method, TarBase:    rho = %.3f (n=%d)\n", our_tarbase_cor$estimate, nrow(our_tarbase_cor_df)))
 cat(sprintf("miReact,    TarBase:    rho = %.3f (n=%d)\n", mireact_cor$estimate, nrow(cor_df)))
 
+# --- Stratified evaluation: {GFP mRNA, fluorescence} x {all, induced} --------
+# Same QC-passing cells for both readouts; see load_gfp_truth() in Utils.R.
+cat("\n=== Stratified evaluation (GFP mRNA + fluorescence; all vs induced cells) ===\n")
+gfp_truth <- load_gfp_truth(PROCESSED_DIR, upper_pct = GFP_UPPER_PCT)
+stratified <- bind_rows(
+  evaluate_score_vs_gfp(our_activity, "activity", "Our method (TargetScan top200)", gfp_truth, n_boot = N_BOOT),
+  evaluate_score_vs_gfp(our_tarbase_activity, "activity", "Our method (TarBase)", gfp_truth, n_boot = N_BOOT),
+  evaluate_score_vs_gfp(mireact_df, "mireact_activity", "miReact (TarBase)", gfp_truth, n_boot = N_BOOT)
+)
+cat("\n=== Paired differences (same cells) ===\n")
+paired <- bind_rows(
+  # Headline comparison: each method as normally used
+  paired_rho_difference(our_activity, "activity", "Our method (TargetScan top200)",
+                        mireact_df, "mireact_activity", "miReact (TarBase)", gfp_truth, n_boot = N_BOOT),
+  # Algorithm-only comparison: identical TarBase target list
+  paired_rho_difference(our_tarbase_activity, "activity", "Our method (TarBase)",
+                        mireact_df, "mireact_activity", "miReact (TarBase)", gfp_truth, n_boot = N_BOOT)
+)
+write.csv(stratified, file.path(OUT_DIR, "stratified_mireact_comparison.csv"), row.names = FALSE)
+write.csv(paired, file.path(OUT_DIR, "paired_mireact_comparison.csv"), row.names = FALSE)
+
 saveRDS(list(our_targetscan = our_cor_df, our_tarbase = our_tarbase_cor_df, mireact = cor_df,
              our_targetscan_cor = our_cor, our_tarbase_cor = our_tarbase_cor, mireact_cor = mireact_cor,
              n_targets_matched_mireact = n_nonzero_targets, sign_check_rho = sign_check$estimate,
+             stratified = stratified, paired = paired,
              normalization = "scran"),
         file.path(OUT_DIR, "res_mireact_comparison_scran.rds"))

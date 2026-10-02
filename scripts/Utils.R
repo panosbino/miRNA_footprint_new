@@ -251,3 +251,195 @@ calculate_activity_mHG <- function(counts, targets){
 }
 
 
+
+
+## ============================================================================
+## GFP ground truth: mRNA + FACS fluorescence, all cells vs Dox-induced cells
+## ----------------------------------------------------------------------------
+## Shared by every HEK_SS3 comparison script so all tools are scored on the
+## SAME cells with the SAME rules.
+##
+## QC rule (unchanged from the original scripts): drop cells at or above the
+## 99th percentile of scran-normalized GFP mRNA, computed across all cells.
+## That same QC-passing set is used for BOTH readouts, so any difference
+## between mRNA and fluorescence rho reflects the readout, not a different
+## set of cells.
+##
+## "induced" = Dox_Group == "Dox Induced" (0.01, 0.1, 1 ug/ml Dox).
+## "No Dox" covers the 0-Dox wells and the Control wells (P23/P24).
+## ============================================================================
+
+GFP_READOUTS <- c(mRNA = "gfp_mrna", fluorescence = "gfp_facs")
+CELL_SETS    <- c("all", "induced")
+
+load_gfp_truth <- function(processed_dir, upper_pct = 0.99) {
+  path <- file.path(processed_dir, "gfp_correlation_data.csv")
+  if (!file.exists(path)) stop("GFP ground-truth table not found: ", path)
+  md <- read.csv(path, stringsAsFactors = FALSE)
+
+  needed  <- c("cell_id", "GFP_normalized", "GFP_fluorescence", "Dox_Group", "Dox_Concentration")
+  missing <- setdiff(needed, colnames(md))
+  if (length(missing) > 0) stop("gfp_correlation_data.csv is missing columns: ", paste(missing, collapse = ", "))
+  if (anyDuplicated(md$cell_id)) stop("Duplicate cell_id values in gfp_correlation_data.csv")
+  unexpected <- setdiff(unique(md$Dox_Group), c("Dox Induced", "No Dox"))
+  if (length(unexpected) > 0) stop("Unexpected Dox_Group labels: ", paste(unexpected, collapse = ", "))
+
+  truth <- data.frame(
+    Cell_ID  = md$cell_id,
+    gfp_mrna = md$GFP_normalized,
+    gfp_facs = md$GFP_fluorescence,
+    dox      = md$Dox_Concentration,
+    induced  = md$Dox_Group == "Dox Induced",
+    stringsAsFactors = FALSE
+  )
+  truth <- truth[is.finite(truth$gfp_mrna), ]
+
+  cutoff <- unname(quantile(truth$gfp_mrna, upper_pct))
+  truth$qc_pass <- truth$gfp_mrna < cutoff & is.finite(truth$gfp_facs)
+  attr(truth, "gfp_mrna_cutoff") <- cutoff
+
+  cat(sprintf(paste0("GFP truth: %d cells; QC (GFP mRNA < %.0fth pct = %.3f) keeps %d ",
+                     "(%d induced, %d uninduced); %d cells have negative FACS values\n"),
+              nrow(truth), 100 * upper_pct, cutoff, sum(truth$qc_pass),
+              sum(truth$qc_pass & truth$induced), sum(truth$qc_pass & !truth$induced),
+              sum(truth$qc_pass & truth$gfp_facs < 0)))
+  truth
+}
+
+# Run `expr` with a fixed seed without disturbing the caller's RNG stream.
+.with_seed <- function(seed, expr) {
+  had_seed <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  if (had_seed) old_seed <- get(".Random.seed", envir = globalenv())
+  on.exit(if (had_seed) assign(".Random.seed", old_seed, envir = globalenv())
+          else rm(".Random.seed", envir = globalenv()))
+  set.seed(seed)
+  expr
+}
+
+# Percentile bootstrap CI for Spearman rho (cells resampled with replacement).
+# cor(method = "spearman") uses average ranks for ties, like cor.test().
+spearman_boot_ci <- function(x, y, n_boot = 1000, seed = 1312, level = 0.95) {
+  if (n_boot <= 0 || length(x) < 3) return(c(NA_real_, NA_real_))
+  n <- length(x)
+  boots <- .with_seed(seed, replicate(n_boot, {
+    i <- sample.int(n, n, replace = TRUE)
+    suppressWarnings(cor(x[i], y[i], method = "spearman"))
+  }))
+  a <- (1 - level) / 2
+  unname(quantile(boots, c(a, 1 - a), na.rm = TRUE))
+}
+
+subset_cells <- function(d, cell_set) {
+  switch(cell_set,
+         all     = d,
+         induced = d[d$induced, , drop = FALSE],
+         stop("Unknown cell_set: ", cell_set))
+}
+
+# Score one method: 2 readouts x 2 cell sets -> 4 rows.
+# `scores` must have a Cell_ID column and the score column `score_col`
+# (sign convention: higher = more miRNA activity).
+evaluate_score_vs_gfp <- function(scores, score_col, method_label, truth,
+                                  n_boot = 1000, seed = 1312) {
+  if (!all(c("Cell_ID", score_col) %in% colnames(scores)))
+    stop(sprintf("[%s] scores must contain columns 'Cell_ID' and '%s'", method_label, score_col))
+
+  s <- data.frame(Cell_ID = scores$Cell_ID, score = scores[[score_col]], stringsAsFactors = FALSE)
+  d <- merge(s, truth[truth$qc_pass, ], by = "Cell_ID")
+  d <- d[is.finite(d$score), ]
+  if (nrow(d) == 0) stop(sprintf("[%s] no cells left after matching to GFP truth -- check Cell_ID format", method_label))
+
+  out <- list()
+  for (cs in CELL_SETS) {
+    sub <- subset_cells(d, cs)
+    for (ro in names(GFP_READOUTS)) {
+      y  <- sub[[GFP_READOUTS[[ro]]]]
+      ct <- suppressWarnings(cor.test(sub$score, y, method = "spearman", exact = FALSE))
+      ci <- spearman_boot_ci(sub$score, y, n_boot = n_boot, seed = seed)
+      out[[length(out) + 1]] <- tibble::tibble(
+        method = method_label, readout = ro, cell_set = cs,
+        rho = unname(ct$estimate), ci_low = ci[1], ci_high = ci[2],
+        p_value = ct$p.value, n = nrow(sub)
+      )
+    }
+  }
+  res <- dplyr::bind_rows(out)
+  for (k in seq_len(nrow(res))) {
+    cat(sprintf("  %-38s %-12s %-8s rho = %.3f [%.3f, %.3f]  n = %d\n",
+                res$method[k], res$readout[k], res$cell_set[k],
+                res$rho[k], res$ci_low[k], res$ci_high[k], res$n[k]))
+  }
+  res
+}
+
+# Paired comparison of two methods on the SAME cells: delta = rho_a - rho_b,
+# with a bootstrap CI from resampling cells jointly for both methods.
+# Also reports rho between the two scores themselves (needed to judge
+# whether two methods that both track GFP are really capturing the same thing).
+paired_rho_difference <- function(scores_a, col_a, label_a,
+                                  scores_b, col_b, label_b,
+                                  truth, n_boot = 1000, seed = 1312) {
+  a <- data.frame(Cell_ID = scores_a$Cell_ID, score_a = scores_a[[col_a]], stringsAsFactors = FALSE)
+  b <- data.frame(Cell_ID = scores_b$Cell_ID, score_b = scores_b[[col_b]], stringsAsFactors = FALSE)
+  d <- merge(merge(a, b, by = "Cell_ID"), truth[truth$qc_pass, ], by = "Cell_ID")
+  d <- d[is.finite(d$score_a) & is.finite(d$score_b), ]
+
+  out <- list()
+  for (cs in CELL_SETS) {
+    sub <- subset_cells(d, cs)
+    n <- nrow(sub)
+    for (ro in names(GFP_READOUTS)) {
+      y <- sub[[GFP_READOUTS[[ro]]]]
+      rho_a <- cor(sub$score_a, y, method = "spearman")
+      rho_b <- cor(sub$score_b, y, method = "spearman")
+      deltas <- .with_seed(seed, replicate(n_boot, {
+        i <- sample.int(n, n, replace = TRUE)
+        cor(sub$score_a[i], y[i], method = "spearman") - cor(sub$score_b[i], y[i], method = "spearman")
+      }))
+      ci <- unname(quantile(deltas, c(0.025, 0.975), na.rm = TRUE))
+      out[[length(out) + 1]] <- tibble::tibble(
+        method_a = label_a, method_b = label_b, readout = ro, cell_set = cs,
+        rho_a = rho_a, rho_b = rho_b, delta = rho_a - rho_b,
+        delta_ci_low = ci[1], delta_ci_high = ci[2],
+        rho_between_methods = cor(sub$score_a, sub$score_b, method = "spearman"),
+        n = n
+      )
+    }
+  }
+  res <- dplyr::bind_rows(out)
+  for (k in seq_len(nrow(res))) {
+    cat(sprintf("  %s - %s | %-12s %-8s delta = %+.3f [%+.3f, %+.3f]  rho(a,b) = %.3f  n = %d\n",
+                res$method_a[k], res$method_b[k], res$readout[k], res$cell_set[k],
+                res$delta[k], res$delta_ci_low[k], res$delta_ci_high[k],
+                res$rho_between_methods[k], res$n[k]))
+  }
+  res
+}
+
+# Forest-style plot of stratified results: rows = methods, panels = readout x cell set.
+plot_stratified <- function(stratified, title = "miR-124 activity vs GFP (Spearman rho, 95% bootstrap CI)") {
+  d <- stratified |>
+    dplyr::mutate(
+      readout  = factor(readout, levels = names(GFP_READOUTS),
+                        labels = c("GFP mRNA (scran)", "GFP fluorescence (FACS)")),
+      cell_set = factor(cell_set, levels = CELL_SETS,
+                        labels = c("All cells", "Dox-induced cells only")),
+      is_ours  = grepl("^Our method", method)
+    )
+  order_by <- d |> dplyr::filter(readout == "GFP fluorescence (FACS)", cell_set == "Dox-induced cells only")
+  lvl <- if (nrow(order_by) > 0) order_by$method[order(order_by$rho)] else unique(d$method)
+  d$method <- factor(d$method, levels = unique(c(lvl, unique(d$method))))
+
+  ggplot2::ggplot(d, ggplot2::aes(x = rho, y = method, colour = is_ours)) +
+    ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+    ggplot2::geom_errorbarh(ggplot2::aes(xmin = ci_low, xmax = ci_high), height = 0.25) +
+    ggplot2::geom_point(size = 2.5) +
+    ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", rho)), vjust = -0.9, size = 3, show.legend = FALSE) +
+    ggplot2::facet_grid(cell_set ~ readout) +
+    ggplot2::scale_colour_manual(values = c(`TRUE` = "#b2182b", `FALSE` = "#2166ac"), guide = "none") +
+    ggplot2::coord_cartesian(xlim = c(min(0, min(d$ci_low, na.rm = TRUE)), 1)) +
+    ggplot2::theme_bw(base_size = 12) +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank()) +
+    ggplot2::labs(x = "Spearman rho with GFP", y = NULL, title = title,
+                  subtitle = "Same QC-passing cells in every panel; methods ordered by induced-cell fluorescence rho")
+}
