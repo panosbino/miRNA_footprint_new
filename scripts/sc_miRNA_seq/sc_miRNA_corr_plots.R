@@ -1,224 +1,129 @@
 library(tidyverse)
-
-
-setwd("~/Desktop/Projects/miRNA_footprint_new/")
-sc_norm <- read.delim("analysis/sc_miRNA_seq/mir124_counts_normalized_full.csv", sep = ",", row.names = 1)
-
-gfp <- read_delim("datasets/HEK_SS3/FACS_data/Plate4/Plate4_GFP_fluorescence.tsv")
-colnames(gfp) <- c("wells","gfp","row","col")
-
-our_cor_df <- merge(sc_norm, gfp, by = c("wells","row","col"))
-#our_cor_df <- our_cor_df[our_cor_df$eGFP < gfp_upper_cutoff, ]
-our_cor_df <- our_cor_df[is.finite(our_cor_df$value) & is.finite(our_cor_df$gfp), ]
-our_cor_df <- our_cor_df |> mutate(gfp = case_when(gfp <= 0 ~ 0, .default = gfp))
-our_cor <- cor.test(our_cor_df$value, our_cor_df$gfp, method = "spearman", exact = FALSE)
-cat(sprintf("Our method (scran, TargetScan): rho = %.3f, n = %d\n", our_cor$estimate, nrow(our_cor_df)))
-
-library(ggplot2)
 library(patchwork)
 
-# ---------------------------------------------------------
-# 1. Data
-# ---------------------------------------------------------
+setwd("~/Desktop/Projects/miRNA_footprint_new/")
 
-# Original data: includes cells where value = 0
-df_all <- our_cor_df
-
-# Remove cells where miR-124 value = 0
-df_nozero <- our_cor_df %>%
-  dplyr::filter(value != 0)
-
-
-# ---------------------------------------------------------
-# 2. Calculate Spearman correlations
-# ---------------------------------------------------------
-
-# --- All cells ---
-
-cor_all_1 <- cor(
-  log10(df_all$gfp + 1),
-  log10(df_all$value + 1),
-  method = "spearman",
-  use = "complete.obs"
+# Full-plate miR-124 files written by prepare_miRNA_sc_mir124_counts.R
+norm_files <- c(
+  CPM    = "datasets/sc_miRNA_seq/mir124_counts_normalized_full.csv",
+  TMM    = "datasets/sc_miRNA_seq/mir124_counts_TMM_full.csv",
+  DESeq2 = "datasets/sc_miRNA_seq/mir124_counts_DESeq2_full.csv"
 )
 
-cor_all_2 <- cor(
-  log10(df_all$gfp + 1),
-  df_all$value,
-  method = "spearman",
-  use = "complete.obs"
-)
+# Induced cells = sequenced wells, physical columns 7-12 (defined by plate layout,
+# not by GFP). Columns 1-5 are uninduced wells with synthetic zeros: excluded.
+INDUCED_COLS <- 7:12
 
-cor_all_3 <- cor(
-  df_all$gfp,
-  df_all$value,
-  method = "spearman",
-  use = "complete.obs"
-)
+# Detected cells: at least MIN_RAW_READS raw miR-124 reads. Removes the zero cells and
+# the 1-read cell (B8); the next-lowest cell has 13 reads, so any value 2-13 gives the same set.
+MIN_RAW_READS <- 2
+raw_reads <- read.delim("datasets/sc_miRNA_seq/mir124_counts_full.csv", sep = ",", row.names = 1) |>
+  dplyr::select(wells, raw_reads = value)
 
+gfp <- read_delim("datasets/HEK_SS3/FACS_data/Plate4/Plate4_GFP_fluorescence.tsv")
+colnames(gfp) <- c("wells", "gfp", "row", "col")
 
-# --- Cells with value != 0 ---
+# Spearman and Pearson correlation with p-values
+correlate <- function(x, y) {
+  sp <- cor.test(x, y, method = "spearman", exact = FALSE)
+  pe <- cor.test(x, y, method = "pearson")
+  tibble(spearman_rho = unname(sp$estimate), spearman_p = sp$p.value,
+         pearson_r = unname(pe$estimate), pearson_p = pe$p.value,
+         n = sum(complete.cases(x, y)))
+}
 
-cor_nozero_1 <- cor(
-  log10(df_nozero$gfp + 1),
-  log10(df_nozero$value + 1),
-  method = "spearman",
-  use = "complete.obs"
-)
+# One scatter plot in the style of the original script
+plot_cor <- function(df, x, y, title, xlab, ylab, fill, shape, color, cor_res, prefix = "") {
+  ggplot(df, aes(x = {{ x }}, y = {{ y }})) +
+    geom_point(fill = fill, size = 3, shape = shape, color = color) +
+    labs(
+      title = paste0(title, "\n", prefix, "n = ", cor_res$n, "\n",
+                     "Spearman \u03c1 = ", round(cor_res$spearman_rho, 3), ", p = ", signif(cor_res$spearman_p, 2), "\n",
+                     "Pearson r = ", round(cor_res$pearson_r, 3), ", p = ", signif(cor_res$pearson_p, 2)),
+      x = xlab,
+      y = ylab
+    ) +
+    theme_bw(base_size = 13) +
+    theme(plot.title = element_text(hjust = 0.5, size = 11))
+}
 
-cor_nozero_2 <- cor(
-  log10(df_nozero$gfp + 1),
-  df_nozero$value,
-  method = "spearman",
-  use = "complete.obs"
-)
+cor_summary <- list()
 
-cor_nozero_3 <- cor(
-  df_nozero$gfp,
-  df_nozero$value,
-  method = "spearman",
-  use = "complete.obs"
-)
+for (norm in names(norm_files)) {
 
+  # ---------------------------------------------------------
+  # 1. Data
+  # ---------------------------------------------------------
+  sc_norm <- read.delim(norm_files[[norm]], sep = ",", row.names = 1)
 
-# ---------------------------------------------------------
-# 3. Plots - ALL CELLS
-# ---------------------------------------------------------
+  our_cor_df <- merge(sc_norm, gfp, by = c("wells", "row", "col"))
+  our_cor_df <- our_cor_df[our_cor_df$col %in% INDUCED_COLS, ]
+  our_cor_df <- our_cor_df[is.finite(our_cor_df$value) & is.finite(our_cor_df$gfp), ]
+  our_cor_df <- our_cor_df |> mutate(gfp = case_when(gfp <= 0 ~ 0, .default = gfp))
 
-p1_all <- ggplot(
-  df_all,
-  aes(x = log10(gfp + 1), y = log10(value + 1))
-) +
-  geom_point(fill = "#7996ec" , size = 3, shape = 21, color = "#406ae4") +
-  labs(
-    title = paste0(
-      "Log10 GFP vs. Log10 miR-124 counts\n",
-      "Spearman \u03c1 = ", round(cor_all_1, 3)
-    ),
-    x = "log10 GFP",
-    y = "log10 miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  # Original data: includes cells where value = 0
+  df_all <- our_cor_df
 
+  # Keep cells with miR-124 detected (>= MIN_RAW_READS raw reads)
+  df_nozero <- our_cor_df |>
+    left_join(raw_reads, by = "wells") |>
+    dplyr::filter(raw_reads >= MIN_RAW_READS)
 
-p2_all <- ggplot(
-  df_all,
-  aes(x = log10(gfp + 1), y = value)
-) +
-  geom_point(fill = "hotpink", size = 3, shape = 21, color = "black") +
-  labs(
-    title = paste0(
-      "Log10 GFP vs. miR-124 counts\n",
-      "Spearman \u03c1 = ", round(cor_all_2, 3)
-    ),
-    x = "log10 GFP",
-    y = "miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  # ---------------------------------------------------------
+  # 2. Correlations: log10 GFP vs log10 miR-124
+  # ---------------------------------------------------------
+  cor_all_1      <- correlate(log10(df_all$gfp + 1),    log10(df_all$value + 1))
+  cor_nozero_1   <- correlate(log10(df_nozero$gfp + 1), log10(df_nozero$value + 1))
 
+  cor_summary[[norm]] <- bind_rows(
+    cor_all_1      |> mutate(cells = "all",        comparison = "log10 GFP vs log10 miR-124"),
+    cor_nozero_1   |> mutate(cells = paste0("reads >= ", MIN_RAW_READS), comparison = "log10 GFP vs log10 miR-124")
+  ) |>
+    mutate(normalization = norm, .before = 1)
 
-p3_all <- ggplot(
-  df_all,
-  aes(x = gfp, y = value)
-) +
-  geom_point(fill = "lightgreen", size = 3, shape = 21, color = "black") +
-  labs(
-    title = paste0(
-      "GFP vs. miR-124 counts\n",
-      "Spearman \u03c1 = ", round(cor_all_3, 3)
-    ),
-    x = "GFP",
-    y = "miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  cat(sprintf("%s, induced cells: Spearman rho = %.3f (p = %.3g), Pearson r = %.3f (p = %.3g), n = %d\n",
+              norm, cor_all_1$spearman_rho, cor_all_1$spearman_p,
+              cor_all_1$pearson_r, cor_all_1$pearson_p, cor_all_1$n))
 
+  # ---------------------------------------------------------
+  # 3. Plot - ALL CELLS
+  # ---------------------------------------------------------
+  ylab_log <- paste0("log10 miR-124 (", norm, ")")
 
-# ---------------------------------------------------------
-# 4. Plots - value != 0
-# ---------------------------------------------------------
+  p1_all <- plot_cor(df_all, log10(gfp + 1), log10(value + 1),
+                     paste0("Log10 GFP vs. Log10 miR-124, ", norm), "log10 GFP", ylab_log,
+                     "#7996ec", 21, "#406ae4", cor_all_1)
 
-p1_nozero <- ggplot(
-  df_nozero,
-  aes(x = log10(gfp + 1), y = log10(value + 1))
-) +
-  geom_point(fill = "lightblue", shape = 24, size = 3, color = "black") +
-  labs(
-    title = paste0(
-      "Log10 GFP vs. Log10 miR-124 counts\n",
-      "value \u2260 0 | Spearman \u03c1 = ", round(cor_nozero_1, 3)
-    ),
-    x = "log10 GFP",
-    y = "log10 miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  # ---------------------------------------------------------
+  # 4. Plot - miR-124 detected (>= MIN_RAW_READS reads)
+  # ---------------------------------------------------------
+  p1_nozero <- plot_cor(df_nozero, log10(gfp + 1), log10(value + 1),
+                        paste0("Log10 GFP vs. Log10 miR-124, ", norm), "log10 GFP", ylab_log,
+                        "lightblue", 24, "black", cor_nozero_1, prefix = paste0("miR-124 reads \u2265 ", MIN_RAW_READS, " | "))
 
+  # ---------------------------------------------------------
+  # ---------------------------------------------------------
+  # 5. Combine the two log-log plots
+  # ---------------------------------------------------------
+  combined_plot <- (p1_all + p1_nozero) +
+    plot_layout(ncol = 2) +
+    plot_annotation(title = paste0("miR-124 vs GFP, induced cells, ", norm, " normalization"))
 
-p2_nozero <- ggplot(
-  df_nozero,
-  aes(x = log10(gfp + 1), y = value)
-) +
-  geom_point(fill = "hotpink", shape = 24, size = 3, color = "black") +
-  labs(
-    title = paste0(
-      "Log10 GFP vs. miR-124 counts\n",
-      "value \u2260 0 | Spearman \u03c1 = ", round(cor_nozero_2, 3)
-    ),
-    x = "log10 GFP",
-    y = "miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
+  print(combined_plot)
 
-
-p3_nozero <- ggplot(
-  df_nozero,
-  aes(x = gfp, y = value)
-) +
-  geom_point(fill = "lightgreen", shape = 24, size = 3, color = "black") +
-  labs(
-    title = paste0(
-      "GFP vs. miR-124 counts\n",
-      "value \u2260 0 | Spearman \u03c1 = ", round(cor_nozero_3, 3)
-    ),
-    x = "GFP",
-    y = "miR-124 normalized counts"
-  ) +
-  theme_bw(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5)
-  )
-
+  ggsave(plot = combined_plot, width = 9, height = 5.5, path = "./analysis/sc_miRNA_seq/",
+         filename = paste0("sc_seq_GFP_cor_induced_", norm, ".png"), device = "png")
+  ggsave(plot = combined_plot, width = 9, height = 5.5, path = "./analysis/sc_miRNA_seq/",
+         filename = paste0("sc_seq_GFP_cor_induced_", norm, ".pdf"), device = cairo_pdf)
+  ggsave(plot = p1_all, width = 4.5, height = 5, path = "./analysis/sc_miRNA_seq/",
+         filename = paste0("sc_seq_GFP_cor_log_log_induced_", norm, ".pdf"), device = cairo_pdf)
+}
 
 # ---------------------------------------------------------
-# 5. Combine all 6 plots
+# 6. Summary table of all correlations
 # ---------------------------------------------------------
-
-combined_plot <- (
-  p1_all + p2_all + p3_all +
-    p1_nozero + p2_nozero + p3_nozero
-) +
-  plot_layout(ncol = 3)
-
-combined_plot
-
-ggsave(plot = combined_plot, width = 12, height = 8,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor.png", device = "png")
-ggsave(plot = combined_plot, width = 12, height = 8,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor.pdf", device = "pdf")
-
-
-ggsave(plot = p1_all, width = 4, height = 4,path = "./analysis/sc_miRNA_seq/", filename = "sc_seq_GFP_cor_log_log.pdf", device = "pdf")
-
-
+cor_summary <- bind_rows(cor_summary) |>
+  mutate(across(c(spearman_rho, pearson_r), \(x) round(x, 3)),
+         across(c(spearman_p, pearson_p), \(x) signif(x, 3)))
+print(cor_summary, n = Inf)
+write_csv(cor_summary, "./analysis/sc_miRNA_seq/sc_seq_GFP_cor_induced_summary.csv")
