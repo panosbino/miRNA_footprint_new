@@ -1,0 +1,13 @@
+"readout","covariate","cell_set","rho"
+"mRNA","log_size_factor","all",-0.318700956608117
+"mRNA","log_total_umis","all",-0.316273221169039
+"mRNA","genes_detected","all",-0.299482465241072
+"fluorescence","log_size_factor","all",-0.161599693968591
+"fluorescence","log_total_umis","all",-0.168095202399195
+"fluorescence","genes_detected","all",-0.134923980428733
+"mRNA","log_size_factor","induced",-0.486915180265039
+"mRNA","log_total_umis","induced",-0.485338985604635
+"mRNA","genes_detected","induced",-0.458906692321654
+"fluorescence","log_size_factor","induced",-0.223342198245252
+"fluorescence","log_total_umis","induced",-0.247031321426172
+"fluorescence","genes_detected","induced",-0.180043577590612

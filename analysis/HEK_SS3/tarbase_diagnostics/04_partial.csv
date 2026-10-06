@@ -1,0 +1,11 @@
+"score","readout","rho_plain","rho_partial"
+"TarBase | A (raw sum)","mRNA",-0.0100818074816719,0.302450464530426
+"TarBase | A (raw sum)","fluorescence",0.208441875003456,0.342572844782277
+"TarBase | C (log ratio)","mRNA",0.736255175790433,0.652018041271829
+"TarBase | C (log ratio)","fluorescence",0.591085429671028,0.68657976519905
+"TarBase | D (rank)","mRNA",0.651169720531635,0.637124891013316
+"TarBase | D (rank)","fluorescence",0.755110375286715,0.728477793003799
+"TargetScan top200 | A (raw sum)","mRNA",0.505137448242096,0.469142446676579
+"TargetScan top200 | A (raw sum)","fluorescence",0.556172462418996,0.536817196954569
+"TargetScan top200 | C (log ratio)","mRNA",0.664332926943941,0.529848538887832
+"TargetScan top200 | C (log ratio)","fluorescence",0.560408667899483,0.595637156676972
