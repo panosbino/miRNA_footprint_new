@@ -1,0 +1,41 @@
+"method","readout","cell_set","rho","ci_low","ci_high","p_value","n","list","variant","variant_label","n_genes"
+"TarBase | A","mRNA","all",0.0931873325796606,0.0240803816366157,0.160758507326401,0.0109344236129349,745,"TarBase","A","A: raw sum (current)",3047
+"TarBase | A","fluorescence","all",0.197019310660658,0.129176489946645,0.267918612379952,5.90088110837798e-08,745,"TarBase","A","A: raw sum (current)",3047
+"TarBase | A","mRNA","induced",-0.0100818074816719,-0.0904190113953274,0.0635924604995849,0.817051504576456,529,"TarBase","A","A: raw sum (current)",3047
+"TarBase | A","fluorescence","induced",0.208441875003456,0.125177064164709,0.290036943507017,1.32450247760354e-06,529,"TarBase","A","A: raw sum (current)",3047
+"TarBase | B","mRNA","all",0.733472752089578,0.688952698447276,0.76428725950757,1.04978176647921e-126,745,"TarBase","B","B: equal weight per gene",3047
+"TarBase | B","fluorescence","all",0.779055321205751,0.749246013905379,0.801367679719643,8.33822942917582e-153,745,"TarBase","B","B: equal weight per gene",3047
+"TarBase | B","mRNA","induced",0.615217391304348,0.547486454566891,0.676990687080415,2.10665353663467e-56,529,"TarBase","B","B: equal weight per gene",3047
+"TarBase | B","fluorescence","induced",0.689274299634707,0.633629761912506,0.738311222906147,8.74814781052378e-76,529,"TarBase","B","B: equal weight per gene",3047
+"TarBase | C","mRNA","all",0.662484337565228,0.610976523249388,0.703399759992203,2.61223132601718e-95,745,"TarBase","C","C: mean log ratio",3047
+"TarBase | C","fluorescence","all",0.575873392742198,0.523081808145155,0.62524384397824,4.99530507289517e-67,745,"TarBase","C","C: mean log ratio",3047
+"TarBase | C","mRNA","induced",0.736255175790433,0.688004280974793,0.776822966078763,1.96449340777556e-91,529,"TarBase","C","C: mean log ratio",3047
+"TarBase | C","fluorescence","induced",0.591085429671028,0.528784996066779,0.640949741362851,3.7939012424153e-51,529,"TarBase","C","C: mean log ratio",3047
+"TarBase | C2","mRNA","all",0.766718832645428,0.731862633719947,0.794193702904839,3.72614825242212e-145,745,"TarBase","C2","C2: log ratio minus non-targets",3047
+"TarBase | C2","fluorescence","all",0.79872982429335,0.771075432856857,0.824887955811621,4.33981479130402e-166,745,"TarBase","C2","C2: log ratio minus non-targets",3047
+"TarBase | C2","mRNA","induced",0.686768458562873,0.634005068404161,0.733650506989122,4.92919778408688e-75,529,"TarBase","C2","C2: log ratio minus non-targets",3047
+"TarBase | C2","fluorescence","induced",0.757247324881552,0.706883541748652,0.799433101209715,1.46274819463047e-99,529,"TarBase","C2","C2: log ratio minus non-targets",3047
+"TarBase | D","mRNA","all",0.751170512118985,0.72169130882591,0.776071255580797,3.66573846328721e-136,745,"TarBase","D","D: mean within-cell rank",3047
+"TarBase | D","fluorescence","all",0.788456303631679,0.759283133721367,0.812834594947471,5.63639935993021e-159,745,"TarBase","D","D: mean within-cell rank",3047
+"TarBase | D","mRNA","induced",0.651169720531635,0.596037988802191,0.698579384850165,3.91722813740933e-65,529,"TarBase","D","D: mean within-cell rank",3047
+"TarBase | D","fluorescence","induced",0.755110375286715,0.70750840719251,0.795953311841902,1.07180676354842e-98,529,"TarBase","D","D: mean within-cell rank",3047
+"TargetScan top200 | A","mRNA","all",0.754644545456932,0.723417673790466,0.784707051780273,4.10672825046612e-138,745,"TargetScan top200","A","A: raw sum (current)",153
+"TargetScan top200 | A","fluorescence","all",0.781076143034773,0.749399795139508,0.800217375585981,4.17504672123988e-154,745,"TargetScan top200","A","A: raw sum (current)",153
+"TargetScan top200 | A","mRNA","induced",0.505137448242096,0.416459771945325,0.579560209078398,1.32758635011597e-35,529,"TargetScan top200","A","A: raw sum (current)",153
+"TargetScan top200 | A","fluorescence","induced",0.556172462418996,0.482220133387774,0.621902557631362,2.76674621305739e-44,529,"TargetScan top200","A","A: raw sum (current)",153
+"TargetScan top200 | B","mRNA","all",0.661558584558302,0.615720001330495,0.700833193294852,5.88401556622924e-95,745,"TargetScan top200","B","B: equal weight per gene",153
+"TargetScan top200 | B","fluorescence","all",0.682382913820418,0.636221530994157,0.714715447639159,3.31107745155202e-103,745,"TargetScan top200","B","B: equal weight per gene",153
+"TargetScan top200 | B","mRNA","induced",0.369482615504836,0.271843160512038,0.445015543627763,1.48254836057424e-18,529,"TargetScan top200","B","B: equal weight per gene",153
+"TargetScan top200 | B","fluorescence","induced",0.399652536956879,0.312594808461824,0.474080083951993,1.04801467373653e-21,529,"TargetScan top200","B","B: equal weight per gene",153
+"TargetScan top200 | C","mRNA","all",0.776221622398746,0.743552906428292,0.797890832068216,5.26688869745922e-151,745,"TargetScan top200","C","C: mean log ratio",153
+"TargetScan top200 | C","fluorescence","all",0.724469726188216,0.685337879126131,0.754557362886197,3.51724704859615e-122,745,"TargetScan top200","C","C: mean log ratio",153
+"TargetScan top200 | C","mRNA","induced",0.664332926943941,0.604639201122674,0.715406070034914,1.23355173559931e-68,529,"TargetScan top200","C","C: mean log ratio",153
+"TargetScan top200 | C","fluorescence","induced",0.560408667899483,0.493094600426715,0.609278495905296,4.49053793862554e-45,529,"TargetScan top200","C","C: mean log ratio",153
+"TargetScan top200 | C2","mRNA","all",0.759644784158096,0.726315466037789,0.786006472100541,5.59431451395434e-141,745,"TargetScan top200","C2","C2: log ratio minus non-targets",153
+"TargetScan top200 | C2","fluorescence","all",0.793532540156469,0.762653537644683,0.815281791657626,1.93534229962718e-162,745,"TargetScan top200","C2","C2: log ratio minus non-targets",153
+"TargetScan top200 | C2","mRNA","induced",0.520139782819456,0.437820606124433,0.59390281942506,5.27918593990834e-38,529,"TargetScan top200","C2","C2: log ratio minus non-targets",153
+"TargetScan top200 | C2","fluorescence","induced",0.589175574541327,0.52104062753263,0.646640127324009,9.4682060895146e-51,529,"TargetScan top200","C2","C2: log ratio minus non-targets",153
+"TargetScan top200 | D","mRNA","all",0.705081658227003,0.662764872737416,0.734624751071364,5.07014419546869e-113,745,"TargetScan top200","D","D: mean within-cell rank",153
+"TargetScan top200 | D","fluorescence","all",0.750102581047136,0.718360125340235,0.774303179396412,1.43653729737735e-135,745,"TargetScan top200","D","D: mean within-cell rank",153
+"TargetScan top200 | D","mRNA","induced",0.369251022188212,0.27849896073815,0.437026667823793,1.56295200657336e-18,529,"TargetScan top200","D","D: mean within-cell rank",153
+"TargetScan top200 | D","fluorescence","induced",0.485001835237823,0.409484549955915,0.545954607073435,1.45651463372125e-32,529,"TargetScan top200","D","D: mean within-cell rank",153

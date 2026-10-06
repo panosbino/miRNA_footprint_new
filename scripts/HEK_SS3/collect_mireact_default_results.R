@@ -7,7 +7,7 @@ library(tidyverse)
 # run_mireact_default_launch.R to find the timestamped job directory.
 # ---------------------------------------------------------------------------
 
-BASE_DIR <- "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- Sys.getenv("MIRNA_BASE_DIR", "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new")
 PROCESSED_DIR <- file.path(BASE_DIR, "datasets/HEK_SS3/processed")
 OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 
@@ -15,6 +15,7 @@ TARGET_MIRNA <- "hsa-miR-124-3p"
 SEED_MOTIF <- "GTGCCTT"   # same motif derived/cross-validated earlier for bayesReact;
                           # confirmed as a valid row key below, not assumed.
 GFP_UPPER_PCT <- 0.99
+N_BOOT <- 1000   # bootstrap resamples for the stratified GFP evaluation
 N_TOP_TARGETS <- 200
 
 source(file.path(BASE_DIR, "scripts/Utils.R"))  # <-- same unverified placeholder as other scripts
@@ -94,7 +95,22 @@ cat("\nFor reference, also compare against the earlier TarBase-mode and bayesRea
     "(res_mireact_comparison_scran.rds, res_bayesreact_comparison_scran.rds) -- three genuinely\n",
     "different methods/target-definitions now available for the same miRNA on the same data.\n")
 
+# --- Stratified evaluation: {GFP mRNA, fluorescence} x {all, induced} --------
+cat("\n=== Stratified evaluation (GFP mRNA + fluorescence; all vs induced cells) ===\n")
+gfp_truth <- load_gfp_truth(PROCESSED_DIR, upper_pct = GFP_UPPER_PCT)
+stratified <- bind_rows(
+  evaluate_score_vs_gfp(our_activity, "activity", "Our method (TargetScan top200)", gfp_truth, n_boot = N_BOOT),
+  evaluate_score_vs_gfp(mireact_df, "mireact_default_activity", "miReact (motif)", gfp_truth, n_boot = N_BOOT)
+)
+cat("\n=== Paired differences (same cells) ===\n")
+paired <- paired_rho_difference(our_activity, "activity", "Our method (TargetScan top200)",
+                                mireact_df, "mireact_default_activity", "miReact (motif)",
+                                gfp_truth, n_boot = N_BOOT)
+write.csv(stratified, file.path(OUT_DIR, "stratified_mireact_default_comparison.csv"), row.names = FALSE)
+write.csv(paired, file.path(OUT_DIR, "paired_mireact_default_comparison.csv"), row.names = FALSE)
+
 saveRDS(list(our = our_cor_df, mireact_default = cor_df, our_cor = our_cor,
              mireact_default_cor = mireact_default_cor, seed_motif_used = SEED_MOTIF,
-             sign_check_rho = sign_check$estimate, normalization = "scran"),
+             sign_check_rho = sign_check$estimate,
+             stratified = stratified, paired = paired, normalization = "scran"),
         file.path(OUT_DIR, "res_mireact_default_comparison_scran.rds"))

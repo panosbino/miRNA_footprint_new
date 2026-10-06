@@ -1,0 +1,41 @@
+"method","readout","cell_set","rho","ci_low","ci_high","p_value","n","version","score","r2_covariates"
+"TarBase | A (raw sum) | original","mRNA","all",0.0931873325796606,0.0240803816366157,0.160758507326401,0.0109344236129349,745,"original","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | original","fluorescence","all",0.197019310660658,0.129176489946645,0.267918612379952,5.90088110837798e-08,745,"original","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | original","mRNA","induced",-0.0100818074816719,-0.0904190113953274,0.0635924604995849,0.817051504576456,529,"original","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | original","fluorescence","induced",0.208441875003456,0.125177064164709,0.290036943507017,1.32450247760354e-06,529,"original","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | residual","mRNA","all",0.262377742010794,0.206970313539524,0.325581388681917,3.4039845294601e-13,745,"size + plate removed","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | residual","fluorescence","all",0.278207723091674,0.216221021399778,0.343814606153325,1.04187791617408e-14,745,"size + plate removed","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | residual","mRNA","induced",0.253866076321225,0.18093402301347,0.336106082939521,3.17270760759026e-09,529,"size + plate removed","TarBase | A (raw sum)",0.332419079128578
+"TarBase | A (raw sum) | residual","fluorescence","induced",0.314409551148191,0.234164696267966,0.393173603977898,1.33275643895571e-13,529,"size + plate removed","TarBase | A (raw sum)",0.332419079128578
+"TarBase | C (log ratio) | original","mRNA","all",0.662484337565228,0.610976523249388,0.703399759992203,2.61223132601718e-95,745,"original","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | original","fluorescence","all",0.575873392742198,0.523081808145155,0.62524384397824,4.99530507289517e-67,745,"original","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | original","mRNA","induced",0.736255175790433,0.688004280974793,0.776822966078763,1.96449340777556e-91,529,"original","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | original","fluorescence","induced",0.591085429671028,0.528784996066779,0.640949741362851,3.7939012424153e-51,529,"original","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | residual","mRNA","all",0.65935214706463,0.61817394081099,0.701507049576041,4.02860102094331e-94,745,"size + plate removed","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | residual","fluorescence","all",0.696397229405842,0.650049401482219,0.731858346117637,3.70587669329914e-109,745,"size + plate removed","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | residual","mRNA","induced",0.599530247367926,0.54740745148238,0.654332538879501,6.1758985404932e-53,529,"size + plate removed","TarBase | C (log ratio)",0.643278841838366
+"TarBase | C (log ratio) | residual","fluorescence","induced",0.671152704430448,0.623849020814427,0.711482626343651,1.60603381396959e-70,529,"size + plate removed","TarBase | C (log ratio)",0.643278841838366
+"TarBase | D (rank) | original","mRNA","all",0.751170512118985,0.72169130882591,0.776071255580797,3.66573846328721e-136,745,"original","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | original","fluorescence","all",0.788456303631679,0.759283133721367,0.812834594947471,5.63639935993021e-159,745,"original","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | original","mRNA","induced",0.651169720531635,0.596037988802191,0.698579384850165,3.91722813740933e-65,529,"original","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | original","fluorescence","induced",0.755110375286715,0.70750840719251,0.795953311841902,1.07180676354842e-98,529,"original","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | residual","mRNA","all",0.683441053483936,0.649048497379266,0.716709522804385,1.20876490893023e-103,745,"size + plate removed","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | residual","fluorescence","all",0.749494992265857,0.71529324610533,0.778699067319004,3.11489695369548e-135,745,"size + plate removed","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | residual","mRNA","induced",0.526234894149614,0.457926487390484,0.589080925028771,5.15980745884666e-39,529,"size + plate removed","TarBase | D (rank)",0.190286305246687
+"TarBase | D (rank) | residual","fluorescence","induced",0.66016535298014,0.60558140946452,0.705380871470129,1.65586985723966e-67,529,"size + plate removed","TarBase | D (rank)",0.190286305246687
+"TargetScan top200 | A (raw sum) | original","mRNA","all",0.754644545456932,0.723417673790466,0.784707051780273,4.10672825046612e-138,745,"original","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | original","fluorescence","all",0.781076143034773,0.749399795139508,0.800217375585981,4.17504672123988e-154,745,"original","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | original","mRNA","induced",0.505137448242096,0.416459771945325,0.579560209078398,1.32758635011597e-35,529,"original","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | original","fluorescence","induced",0.556172462418996,0.482220133387774,0.621902557631362,2.76674621305739e-44,529,"original","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | residual","mRNA","all",0.690789673249319,0.649703609792178,0.734801988274054,9.79390640896676e-107,745,"size + plate removed","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | residual","fluorescence","all",0.742838403855102,0.705640049308173,0.767636855395057,1.29874634863441e-131,745,"size + plate removed","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | residual","mRNA","induced",0.388355484797686,0.30193955004655,0.467694105394231,1.73193545553419e-20,529,"size + plate removed","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | A (raw sum) | residual","fluorescence","induced",0.47837925318794,0.395766241456269,0.549384366281224,1.31798693723806e-31,529,"size + plate removed","TargetScan top200 | A (raw sum)",0.0587832425486679
+"TargetScan top200 | C (log ratio) | original","mRNA","all",0.776221622398746,0.743552906428292,0.797890832068216,5.26688869745922e-151,745,"original","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | original","fluorescence","all",0.724469726188216,0.685337879126131,0.754557362886197,3.51724704859615e-122,745,"original","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | original","mRNA","induced",0.664332926943941,0.604639201122674,0.715406070034914,1.23355173559931e-68,529,"original","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | original","fluorescence","induced",0.560408667899483,0.493094600426715,0.609278495905296,4.49053793862554e-45,529,"original","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | residual","mRNA","all",0.713893623046095,0.678635113317452,0.744717533652393,4.33603008564249e-117,745,"size + plate removed","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | residual","fluorescence","all",0.765600912496388,0.731456888037282,0.787772359175862,1.74216715185696e-144,745,"size + plate removed","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | residual","mRNA","induced",0.434820950886329,0.345364853541717,0.510430340630914,8.24683374667063e-26,529,"size + plate removed","TargetScan top200 | C (log ratio)",0.395059797001823
+"TargetScan top200 | C (log ratio) | residual","fluorescence","induced",0.533611237297248,0.450857438019656,0.596567153136604,2.9017546425173e-40,529,"size + plate removed","TargetScan top200 | C (log ratio)",0.395059797001823

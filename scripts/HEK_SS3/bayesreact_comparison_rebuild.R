@@ -30,7 +30,7 @@ library(tidyverse)
 # rebuild; treat the sign-coherence check below as the first real test.
 # ---------------------------------------------------------------------------
 
-BASE_DIR <- "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- Sys.getenv("MIRNA_BASE_DIR", "/cfs/klemming/projects/snic/naiss2024-6-235/miRNA_footprint_new")
 TOOLS_DIR <- file.path(BASE_DIR, "tools")
 MIREACT_DIR <- file.path(TOOLS_DIR, "miReact")
 PROCESSED_DIR <- file.path(BASE_DIR, "datasets/HEK_SS3/processed")
@@ -46,6 +46,7 @@ SEED_MOTIF <- "GTGCCTT"   # 7mer-m8 target site, derived + cross-validated again
                           # from that turn if this needs re-verifying.
 GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
+N_BOOT <- 1000   # bootstrap resamples for the stratified GFP evaluation
 
 # TODO: same unresolved placeholder as the other rebuilt scripts.
 source(file.path(BASE_DIR, "scripts/Utils.R")) 
@@ -148,6 +149,31 @@ if (sign_check$estimate < 0) {
 cat(sprintf("\n=== Comparison (scran-normalized) ===\nOur method:  rho = %.3f (n=%d)\nbayesReact:  rho = %.3f (n=%d)\n",
             our_cor$estimate, nrow(our_cor_df), bayesreact_cor$estimate, nrow(cor_df)))
 
+# --- Saturation diagnostic ----------------------------------------------------
+# bayesReact activities appear capped (values of exactly +/-8 seen in earlier logs).
+# Cells tied at the cap carry no ranking information among themselves.
+act_abs <- abs(bayesreact_activity$bayesreact_activity)
+n_capped <- sum(act_abs == max(act_abs, na.rm = TRUE), na.rm = TRUE)
+cat(sprintf("bayesReact saturation: %d of %d cells at |activity| = %.3f (the maximum)\n",
+            n_capped, nrow(bayesreact_activity), max(act_abs, na.rm = TRUE)))
+
+# --- Stratified evaluation: {GFP mRNA, fluorescence} x {all, induced} --------
+cat("\n=== Stratified evaluation (GFP mRNA + fluorescence; all vs induced cells) ===\n")
+gfp_truth <- load_gfp_truth(PROCESSED_DIR, upper_pct = GFP_UPPER_PCT)
+bayesreact_scores <- bayesreact_activity |> rownames_to_column("Cell_ID")
+stratified <- bind_rows(
+  evaluate_score_vs_gfp(our_activity, "activity", "Our method (TargetScan top200)", gfp_truth, n_boot = N_BOOT),
+  evaluate_score_vs_gfp(bayesreact_scores, "bayesreact_activity", "bayesReact (motif)", gfp_truth, n_boot = N_BOOT)
+)
+cat("\n=== Paired differences (same cells) ===\n")
+paired <- paired_rho_difference(our_activity, "activity", "Our method (TargetScan top200)",
+                                bayesreact_scores, "bayesreact_activity", "bayesReact (motif)",
+                                gfp_truth, n_boot = N_BOOT)
+write.csv(stratified, file.path(OUT_DIR, "stratified_bayesreact_comparison.csv"), row.names = FALSE)
+write.csv(paired, file.path(OUT_DIR, "paired_bayesreact_comparison.csv"), row.names = FALSE)
+
 saveRDS(list(our = our_cor_df, bayesreact = cor_df, our_cor = our_cor, bayesreact_cor = bayesreact_cor,
-             seed_motif_used = SEED_MOTIF, sign_check_rho = sign_check$estimate, normalization = "scran"),
+             seed_motif_used = SEED_MOTIF, sign_check_rho = sign_check$estimate,
+             n_saturated_cells = n_capped, stratified = stratified, paired = paired,
+             normalization = "scran"),
         file.path(OUT_DIR, "res_bayesreact_comparison_scran.rds"))

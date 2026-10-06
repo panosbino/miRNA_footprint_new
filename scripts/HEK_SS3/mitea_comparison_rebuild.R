@@ -1,6 +1,6 @@
 library(tidyverse)
 
-BASE_DIR <- "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"
+BASE_DIR <- Sys.getenv("MIRNA_BASE_DIR", "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new")
 TOOLS_DIR <- file.path(BASE_DIR, "tools")
 PROCESSED_DIR <- file.path(BASE_DIR, "datasets/HEK_SS3/processed")
 OUT_DIR <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
@@ -8,6 +8,7 @@ MITEA_INPUT_DIR <- file.path(OUT_DIR, "mitea_input")
 
 GFP_UPPER_PCT <- 0.99
 N_TOP_TARGETS <- 200
+N_BOOT <- 1000   # bootstrap resamples for the stratified GFP evaluation
 
 source(file.path(BASE_DIR, "scripts/Utils.R"))  # <-- same unverified placeholder as other scripts
 
@@ -56,7 +57,8 @@ evaluate_mitea_result <- function(csv_file, score_col, label) {
     cat(sprintf("  *** WARNING: negative sign-check for %s -- investigate before trusting this result. ***\n", label))
   }
 
-  list(cor_df = cor_df, cor = mitea_cor, sign_check_rho = sign_check$estimate)
+  list(cor_df = cor_df, cor = mitea_cor, sign_check_rho = sign_check$estimate,
+       scores = scores, score_col = score_col, label = label)
 }
 
 mirtarbase_res <- evaluate_mitea_result("mitea_activity_scores_mirtarbase_scran.csv", "mitea_activity", "miRTarBase")
@@ -77,7 +79,26 @@ cat("\nThe TargetScan (top 200) row above is the fairest direct comparison to ou
 cat("\nFor reference, also compare against res_mireact_comparison_scran.rds (TarBase mode),\n",
     "res_bayesreact_comparison_scran.rds, and res_mireact_default_comparison_scran.rds.\n")
 
+# --- Stratified evaluation: {GFP mRNA, fluorescence} x {all, induced} --------
+cat("\n=== Stratified evaluation (GFP mRNA + fluorescence; all vs induced cells) ===\n")
+gfp_truth <- load_gfp_truth(PROCESSED_DIR, upper_pct = GFP_UPPER_PCT)
+mitea_runs <- list(mirtarbase_res, tarbase_res, targetscan_all_res, targetscan_top200_res)
+stratified <- bind_rows(
+  evaluate_score_vs_gfp(our_activity, "activity", "Our method (TargetScan top200)", gfp_truth, n_boot = N_BOOT),
+  map_dfr(mitea_runs, function(r)
+    evaluate_score_vs_gfp(r$scores, r$score_col, paste0("miTEA-HiRes (", r$label, ")"), gfp_truth, n_boot = N_BOOT))
+)
+cat("\n=== Paired differences vs our method (same cells) ===\n")
+# TargetScan (top 200) is the same-target-list comparison; miRTarBase is miTEA as normally used.
+paired <- map_dfr(list(targetscan_top200_res, mirtarbase_res), function(r)
+  paired_rho_difference(our_activity, "activity", "Our method (TargetScan top200)",
+                        r$scores, r$score_col, paste0("miTEA-HiRes (", r$label, ")"),
+                        gfp_truth, n_boot = N_BOOT))
+write.csv(stratified, file.path(OUT_DIR, "stratified_mitea_comparison.csv"), row.names = FALSE)
+write.csv(paired, file.path(OUT_DIR, "paired_mitea_comparison.csv"), row.names = FALSE)
+
 saveRDS(list(our = our_cor_df,
+             stratified = stratified, paired = paired,
              mitea_mirtarbase = mirtarbase_res$cor_df, mitea_tarbase = tarbase_res$cor_df,
              mitea_targetscan_all = targetscan_all_res$cor_df, mitea_targetscan_top200 = targetscan_top200_res$cor_df,
              our_cor = our_cor,

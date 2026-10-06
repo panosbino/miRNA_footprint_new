@@ -1,0 +1,7 @@
+normalization,spearman_rho,spearman_p,pearson_r,pearson_p,n,cells,comparison
+CPM,0.256,0.0827,0.353,0.015,47,all,log10 GFP vs log10 miR-124
+CPM,0.145,0.358,0.201,0.201,42,reads >= 2,log10 GFP vs log10 miR-124
+TMM,0.263,0.0745,0.342,0.0187,47,all,log10 GFP vs log10 miR-124
+TMM,0.157,0.322,0.158,0.318,42,reads >= 2,log10 GFP vs log10 miR-124
+DESeq2,0.232,0.116,0.359,0.0133,47,all,log10 GFP vs log10 miR-124
+DESeq2,0.113,0.475,0.142,0.37,42,reads >= 2,log10 GFP vs log10 miR-124
