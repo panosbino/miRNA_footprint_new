@@ -1,6 +1,10 @@
 # External tool clones -- fetched via setup_tools.sh, not vendored
 tools/miReact/
 tools/R_library/
+tools/miDGD/
+tools/miDGD_paper/
+tools/midgd_data.zip
+tools/midgd_features/
 
 # Environment/dependency artifacts -- never belong in git
 conda_pkgs/
