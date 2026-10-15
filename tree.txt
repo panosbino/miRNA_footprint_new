@@ -1,0 +1,547 @@
+.
+├── Plan for benchmarking.docx
+├── Running the tools on the HEK data.docx
+├── Single-cell miRNA activity inference progress report and tool comparison.docx
+├── analysis
+│   ├── HEK_SS3
+│   │   ├── comparisons
+│   │   │   ├── bayesReact_out
+│   │   │   │   ├── FC_rank_2026-09-07.rds
+│   │   │   │   ├── seqXmot_counts.rds
+│   │   │   │   └── seqXmot_probs.rds
+│   │   │   ├── coexp_fluor_all_features.pdf
+│   │   │   ├── coexp_fluor_all_random_pools.pdf
+│   │   │   ├── coexp_fluor_all_random_subsets.pdf
+│   │   │   ├── coexp_fluor_induced_features.pdf
+│   │   │   ├── coexp_fluor_induced_random_pools.pdf
+│   │   │   ├── coexp_fluor_induced_random_subsets.pdf
+│   │   │   ├── coexp_validation_features.pdf
+│   │   │   ├── coexp_validation_random_pools.pdf
+│   │   │   ├── coexp_validation_random_subsets.pdf
+│   │   │   ├── comparison_all_results.pdf
+│   │   │   ├── comparison_default_per_method.pdf
+│   │   │   ├── cutoff_benchmark_absolute.pdf
+│   │   │   ├── cutoff_benchmark_percentage.pdf
+│   │   │   ├── cutoff_benchmark_table.csv
+│   │   │   ├── cutoff_benchmark_vs_size.pdf
+│   │   │   ├── fluorescence_accuracy_bars.pdf
+│   │   │   ├── fluorescence_accuracy_table.csv
+│   │   │   ├── fluorescence_join_check.pdf
+│   │   │   ├── mireact_default_job_tracking.rds
+│   │   │   ├── mitea_input
+│   │   │   │   ├── counts_data
+│   │   │   │   │   └── counts_symbol.txt
+│   │   │   │   ├── mitea_activity_scores_mirtarbase_scran.csv
+│   │   │   │   ├── mitea_activity_scores_tarbase_scran.csv
+│   │   │   │   ├── mitea_activity_scores_targetscan_all_scran.csv
+│   │   │   │   ├── mitea_activity_scores_targetscan_top200_scran.csv
+│   │   │   │   ├── results
+│   │   │   │   │   ├── activity_cutoffs.csv
+│   │   │   │   │   ├── activity_pvals.csv
+│   │   │   │   │   └── activity_stats.csv
+│   │   │   │   ├── tarbase_124_targets.txt
+│   │   │   │   ├── targetscan_all_124_targets.txt
+│   │   │   │   └── targetscan_top200_124_targets.txt
+│   │   │   ├── paired_vs_ours_all_tools.csv
+│   │   │   ├── res_all_tools_comparison_combined.rds
+│   │   │   ├── res_bayesreact_comparison_scran.rds
+│   │   │   ├── res_coexpression_cutoff_benchmark.rds
+│   │   │   ├── res_coexpression_filtered_targets.rds
+│   │   │   ├── res_coexpression_validation.rds
+│   │   │   ├── res_coexpression_validation_fluorescence.rds
+│   │   │   ├── res_fluorescence_accuracy.rds
+│   │   │   ├── res_mireact_comparison_scran.rds
+│   │   │   ├── res_mireact_default_comparison_scran.rds
+│   │   │   ├── res_mitea_comparison_scran.rds
+│   │   │   ├── stratified_all_tools.csv
+│   │   │   ├── stratified_all_tools.pdf
+│   │   │   └── stratified_all_tools.png
+│   │   ├── depth_subsampling_scran
+│   │   │   ├── plots
+│   │   │   └── res_depth_subsampling_scran_n100.rds
+│   │   ├── mir124_activity_gfp
+│   │   │   └── plots
+│   │   │       ├── mir124_activity_vs_GFP_all_cutoffs_grid.png
+│   │   │       ├── mir124_activity_vs_fluo_top100.png
+│   │   │       ├── mir124_activity_vs_fluo_top1000.png
+│   │   │       ├── mir124_activity_vs_fluo_top200.png
+│   │   │       ├── mir124_activity_vs_fluo_top500.png
+│   │   │       ├── mir124_activity_vs_norm_top100.png
+│   │   │       ├── mir124_activity_vs_norm_top1000.png
+│   │   │       ├── mir124_activity_vs_norm_top200.png
+│   │   │       ├── mir124_activity_vs_norm_top500.png
+│   │   │       ├── mir124_activity_vs_raw_top100.png
+│   │   │       ├── mir124_activity_vs_raw_top1000.png
+│   │   │       ├── mir124_activity_vs_raw_top200.png
+│   │   │       └── mir124_activity_vs_raw_top500.png
+│   │   ├── plots
+│   │   │   ├── ridge_gfp_expression_by_dox.png
+│   │   │   ├── umap_dox_binary.png
+│   │   │   ├── umap_dox_binary_by_plate.png
+│   │   │   ├── umap_dox_concentration.png
+│   │   │   ├── umap_dox_concentration_faceted.png
+│   │   │   ├── umap_gfp_expression_95percentile.png
+│   │   │   ├── umap_gfp_expression_99percentile.png
+│   │   │   ├── umap_gfp_expression_by_binary_improved.png
+│   │   │   ├── umap_gfp_expression_by_dox_improved.png
+│   │   │   ├── umap_plate_and_dox.png
+│   │   │   ├── umap_plate_batches_UMIs.png
+│   │   │   └── violin_gfp_expression_by_dox.png
+│   │   ├── qc
+│   │   │   └── plots
+│   │   │       ├── gfp_normcount_vs_fluorescence.png
+│   │   │       ├── gfp_normcount_vs_fluorescence_by_dox.png
+│   │   │       ├── gfp_normcount_vs_fluorescence_dox_treated.png
+│   │   │       ├── gfp_rawcount_vs_fluorescence.png
+│   │   │       ├── ridge_gfp_expression_by_dox.png
+│   │   │       ├── ridge_gfp_fluorescence_by_dox.png
+│   │   │       ├── umap_dox_binary.png
+│   │   │       ├── umap_dox_binary_by_plate.png
+│   │   │       ├── umap_dox_concentration.png
+│   │   │       ├── umap_dox_concentration_faceted.png
+│   │   │       ├── umap_gfp_expression_95percentile.png
+│   │   │       ├── umap_gfp_expression_99percentile.png
+│   │   │       ├── umap_gfp_expression_by_binary_improved.png
+│   │   │       ├── umap_gfp_expression_by_dox_improved.png
+│   │   │       ├── umap_gfp_fluorescence.png
+│   │   │       ├── umap_gfp_fluorescence_by_dox.png
+│   │   │       ├── umap_plate_and_dox.png
+│   │   │       ├── umap_plate_batches_UMIs.png
+│   │   │       └── violin_gfp_expression_by_dox.png
+│   │   └── tarbase_diagnostics
+│   │       ├── 01_ladder.pdf
+│   │       ├── 01_ladder_null.csv
+│   │       ├── 01_ladder_stratified.csv
+│   │       ├── 02_concentration.pdf
+│   │       ├── 02_concentration_per_cell.csv
+│   │       ├── 02_drop_top_genes.csv
+│   │       ├── 02_drop_top_genes.pdf
+│   │       ├── 03_per_gene_rho.csv
+│   │       ├── 03_per_gene_rho.pdf
+│   │       ├── 03_per_gene_rho_vs_expression.pdf
+│   │       ├── 03_size_curve.csv
+│   │       ├── 03_size_curve.pdf
+│   │       ├── 03_subsets.csv
+│   │       ├── 03_subsets.pdf
+│   │       ├── 04_covariates.csv
+│   │       ├── 04_partial.csv
+│   │       ├── 04_random_sets.csv
+│   │       ├── 04_readout_covariates.csv
+│   │       ├── 04_residualized.csv
+│   │       └── 04_size_confound.pdf
+│   ├── mESCs
+│   │   ├── Combined_top3_mESC_separate_tool_comp.pdf
+│   │   ├── Plots.pptx
+│   │   ├── Presentation1
+│   │   │   └── Slide1.jpeg
+│   │   ├── bayesReact_out
+│   │   │   ├── FC_rank_2026-09-22.rds
+│   │   │   ├── seqXmot_counts.rds
+│   │   │   └── seqXmot_probs.rds
+│   │   ├── mesc_exp_for_mireact.rds
+│   │   ├── mireact_mesc_job_tracking.rds
+│   │   ├── mitea_input
+│   │   │   ├── combined_targets.txt
+│   │   │   ├── counts_data
+│   │   │   │   └── counts_symbol.txt
+│   │   │   ├── mirtarbase_target_counts.csv
+│   │   │   ├── mitea_scores_combined.csv
+│   │   │   ├── mitea_scores_mirtarbase_MIR17.csv
+│   │   │   ├── mitea_scores_mirtarbase_MIR291.csv
+│   │   │   ├── mitea_scores_mirtarbase_MIR292.csv
+│   │   │   ├── mitea_scores_mirtarbase_combined.csv
+│   │   │   ├── mitea_scores_negctrl.csv
+│   │   │   ├── negctrl_targets.txt
+│   │   │   └── results
+│   │   │       ├── activity_cutoffs.csv
+│   │   │       ├── activity_pvals.csv
+│   │   │       └── activity_stats.csv
+│   │   ├── res_all_methods_separation_combined.rds
+│   │   ├── res_bayesreact_separation.rds
+│   │   ├── res_mireact_separation.rds
+│   │   ├── res_mitea_mirtarbase_separation.rds
+│   │   ├── res_mitea_separation.rds
+│   │   ├── res_our_method_separation.rds
+│   │   ├── separation_bayesreact_MIR17.pdf
+│   │   ├── separation_bayesreact_MIR291.pdf
+│   │   ├── separation_bayesreact_MIR292.pdf
+│   │   ├── separation_bayesreact_combined.pdf
+│   │   ├── separation_comparison_combined.pdf
+│   │   ├── separation_comparison_negctrl.pdf
+│   │   ├── separation_comparison_per_family.pdf
+│   │   ├── separation_mireact_MIR17.pdf
+│   │   ├── separation_mireact_MIR291.pdf
+│   │   ├── separation_mireact_MIR292.pdf
+│   │   ├── separation_mireact_combined.pdf
+│   │   ├── separation_mitea_combined.pdf
+│   │   ├── separation_mitea_mirtarbase_MIR17.pdf
+│   │   ├── separation_mitea_mirtarbase_MIR291.pdf
+│   │   ├── separation_mitea_mirtarbase_MIR292.pdf
+│   │   ├── separation_mitea_mirtarbase_combined.pdf
+│   │   ├── separation_mitea_negctrl.pdf
+│   │   ├── separation_our_method_MIR17.pdf
+│   │   ├── separation_our_method_MIR17_top200.pdf
+│   │   ├── separation_our_method_MIR291.pdf
+│   │   ├── separation_our_method_MIR291_top200.pdf
+│   │   ├── separation_our_method_MIR292.pdf
+│   │   ├── separation_our_method_MIR292_top200.pdf
+│   │   ├── separation_our_method_all.pdf
+│   │   ├── separation_our_method_negctrl.pdf
+│   │   ├── separation_our_method_top200.pdf
+│   │   └── targets
+│   │       ├── family_target_overlap.tsv
+│   │       ├── targets_mirdb.tsv
+│   │       ├── targets_mirtarbase.tsv
+│   │       └── targets_tarbase.tsv
+│   └── sc_miRNA_seq
+│       ├── SS3_footprinting_plates.pptx
+│       ├── mir124_counts_full.csv
+│       ├── mir124_counts_normalized_full.csv
+│       ├── mir124_counts_v2_2nd.csv
+│       ├── mir124_norm_counts_v2_2nd.csv
+│       ├── plate_2nd_part.pdf
+│       ├── sc_seq_GFP_cor.pdf
+│       ├── sc_seq_GFP_cor.png
+│       ├── sc_seq_GFP_cor_induced_CPM.pdf
+│       ├── sc_seq_GFP_cor_induced_CPM.png
+│       ├── sc_seq_GFP_cor_induced_DESeq2.pdf
+│       ├── sc_seq_GFP_cor_induced_DESeq2.png
+│       ├── sc_seq_GFP_cor_induced_TMM.pdf
+│       ├── sc_seq_GFP_cor_induced_TMM.png
+│       ├── sc_seq_GFP_cor_induced_summary.csv
+│       ├── sc_seq_GFP_cor_linear_induced_CPM.pdf
+│       ├── sc_seq_GFP_cor_linear_induced_DESeq2.pdf
+│       ├── sc_seq_GFP_cor_linear_induced_TMM.pdf
+│       ├── sc_seq_GFP_cor_log_log.pdf
+│       ├── sc_seq_GFP_cor_log_log_induced_CPM.pdf
+│       ├── sc_seq_GFP_cor_log_log_induced_DESeq2.pdf
+│       └── sc_seq_GFP_cor_log_log_induced_TMM.pdf
+├── datasets
+│   ├── HEK_Rzepiela
+│   │   ├── GFP_counts.rds
+│   │   ├── counts.rds
+│   │   ├── filtered_feature_bc_matrix
+│   │   │   ├── barcodes.tsv.gz
+│   │   │   ├── features.tsv.gz
+│   │   │   └── matrix.mtx.gz
+│   │   └── raw_counts.rds
+│   ├── HEK_SS3
+│   │   ├── FACS_data
+│   │   │   ├── 20240726 SortExperiment20240726 Inna - GFP
+│   │   │   │   ├── 20240726 Inna - GFP.xml
+│   │   │   │   ├── 20240726 Sort_0 ug,2f,ml Dox sample.fcs
+│   │   │   │   ├── 20240726 Sort_001 ug,2f,ml Dox sample.fcs
+│   │   │   │   ├── 20240726 Sort_01 ug,2f,ml Dox sample.fcs
+│   │   │   │   ├── 20240726 Sort_1 ug,2f,ml Dox sample.fcs
+│   │   │   │   ├── 20240726 Sort_INX_0 ug,2f,ml Dox sample_001.fcs
+│   │   │   │   ├── 20240726 Sort_INX_0 ug,2f,ml Dox sample_002.fcs
+│   │   │   │   ├── 20240726 Sort_INX_0 ug,2f,ml Dox sample_003.fcs
+│   │   │   │   ├── 20240726 Sort_INX_0 ug,2f,ml Dox sample_004.fcs
+│   │   │   │   ├── 20240726 Sort_INX_0 ug,2f,ml Dox sample_005.fcs
+│   │   │   │   ├── 20240726 Sort_INX_001 ug,2f,ml Dox sample_001.fcs
+│   │   │   │   ├── 20240726 Sort_INX_001 ug,2f,ml Dox sample_002.fcs
+│   │   │   │   ├── 20240726 Sort_INX_001 ug,2f,ml Dox sample_003.fcs
+│   │   │   │   ├── 20240726 Sort_INX_001 ug,2f,ml Dox sample_004.fcs
+│   │   │   │   ├── 20240726 Sort_INX_001 ug,2f,ml Dox sample_005.fcs
+│   │   │   │   ├── 20240726 Sort_INX_01 ug,2f,ml Dox sample_001.fcs
+│   │   │   │   ├── 20240726 Sort_INX_01 ug,2f,ml Dox sample_002.fcs
+│   │   │   │   ├── 20240726 Sort_INX_01 ug,2f,ml Dox sample_003.fcs
+│   │   │   │   ├── 20240726 Sort_INX_01 ug,2f,ml Dox sample_004.fcs
+│   │   │   │   ├── 20240726 Sort_INX_01 ug,2f,ml Dox sample_005.fcs
+│   │   │   │   ├── 20240726 Sort_INX_1 ug,2f,ml Dox sample_001.fcs
+│   │   │   │   ├── 20240726 Sort_INX_1 ug,2f,ml Dox sample_002.fcs
+│   │   │   │   ├── 20240726 Sort_INX_1 ug,2f,ml Dox sample_003.fcs
+│   │   │   │   ├── 20240726 Sort_INX_1 ug,2f,ml Dox sample_004.fcs
+│   │   │   │   ├── 20240726 Sort_INX_1 ug,2f,ml Dox sample_005.fcs
+│   │   │   │   ├── 20240726 Sort_INX_Untransfected sample_001.fcs
+│   │   │   │   ├── 20240726 Sort_INX_Untransfected sample_002.fcs
+│   │   │   │   ├── 20240726 Sort_INX_Untransfected sample_003.fcs
+│   │   │   │   ├── 20240726 Sort_INX_Untransfected sample_004.fcs
+│   │   │   │   └── 20240726 Sort_Untransfected sample.fcs
+│   │   │   ├── 20240726_SortExperiment20240726_Inna_-_GFP.zip
+│   │   │   ├── 20240726_SortFCS_files20240726_Sort_001_ug,2f,ml_Dox_sample.fcs
+│   │   │   ├── 20240726_SortFCS_files20240726_Sort_01_ug,2f,ml_Dox_sample.fcs
+│   │   │   ├── 20240726_SortFCS_files20240726_Sort_0_ug,2f,ml_Dox_sample.fcs
+│   │   │   ├── 20240726_SortFCS_files20240726_Sort_1_ug,2f,ml_Dox_sample.fcs
+│   │   │   ├── 20240726_SortFCS_files20240726_Sort_Untransfected_sample.fcs
+│   │   │   ├── P101_GFP_fluorescence.png
+│   │   │   ├── P101_GFP_fluorescence.tsv
+│   │   │   ├── P103_GFP_fluorescence.png
+│   │   │   ├── P103_GFP_fluorescence.tsv
+│   │   │   ├── P105_GFP_fluorescence.png
+│   │   │   ├── P105_GFP_fluorescence.tsv
+│   │   │   ├── PDFs
+│   │   │   │   ├── 20240726_Sort20240726_Sort_001_ug,2f,ml_Dox_sample_26072024111936.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_01_ug,2f,ml_Dox_sample_26072024111940.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_0_ug,2f,ml_Dox_sample_26072024111930.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_1_ug,2f,ml_Dox_sample_26072024111945.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_001_ug,2f,ml_Dox_sample_004_26072024121349.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_001_ug,2f,ml_Dox_sample_005_26072024122321.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_01_ug,2f,ml_Dox_sample_004_26072024121543.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_01_ug,2f,ml_Dox_sample_005_26072024122509.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_0_ug,2f,ml_Dox_sample_004_26072024121135.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_0_ug,2f,ml_Dox_sample_005_26072024122143.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_1_ug,2f,ml_Dox_sample_004_26072024121802.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_1_ug,2f,ml_Dox_sample_005_26072024122706.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_Untransfected_sample_004_26072024121947.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_Untransfected_sample_26072024105118.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024122921.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123001.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123024.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123039.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123414.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123428.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123445.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123502.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123519.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123534.pdf
+│   │   │   │   └── 20240726_SortSort_Report_26072024123949.pdf
+│   │   │   ├── Plate1_101
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_001_ug,2f,ml_Dox_sample_001_26072024112003.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_01_ug,2f,ml_Dox_sample_001_26072024112009.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_0_ug,2f,ml_Dox_sample_001_26072024111954.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_1_ug,2f,ml_Dox_sample_001_26072024112013.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_Untransfected_sample_001_26072024112017.pdf
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_001_ug,2f,ml_Dox_sample_001.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_01_ug,2f,ml_Dox_sample_001.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_0_ug,2f,ml_Dox_sample_001.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_1_ug,2f,ml_Dox_sample_001.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_Untransfected_sample_001.fcs
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123709.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123801.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123850.pdf
+│   │   │   │   └── 20240726_SortSort_Report_26072024123933.pdf
+│   │   │   ├── Plate2_103
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_001_ug,2f,ml_Dox_sample_002_26072024112907.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_01_ug,2f,ml_Dox_sample_002_26072024113354.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_0_ug,2f,ml_Dox_sample_002_26072024112412.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_1_ug,2f,ml_Dox_sample_002_26072024113829.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_Untransfected_sample_002_26072024114029.pdf
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_001_ug,2f,ml_Dox_sample_002.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_01_ug,2f,ml_Dox_sample_002.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_0_ug,2f,ml_Dox_sample_002.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_1_ug,2f,ml_Dox_sample_002.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_Untransfected_sample_002.fcs
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123653.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123746.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123835.pdf
+│   │   │   │   └── 20240726_SortSort_Report_26072024123919.pdf
+│   │   │   ├── Plate3_105
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_001_ug,2f,ml_Dox_sample_003_26072024114944.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_01_ug,2f,ml_Dox_sample_003_26072024115419.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_0_ug,2f,ml_Dox_sample_003_26072024114512.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_1_ug,2f,ml_Dox_sample_003_26072024115925.pdf
+│   │   │   │   ├── 20240726_Sort20240726_Sort_INX_Untransfected_sample_003_26072024120919.pdf
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_001_ug,2f,ml_Dox_sample_003.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_01_ug,2f,ml_Dox_sample_003.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_0_ug,2f,ml_Dox_sample_003.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_1_ug,2f,ml_Dox_sample_003.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_Untransfected_sample_003.fcs
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123634.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123728.pdf
+│   │   │   │   ├── 20240726_SortSort_Report_26072024123821.pdf
+│   │   │   │   └── 20240726_SortSort_Report_26072024123905.pdf
+│   │   │   ├── Plate4
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_001_ug,2f,ml_Dox_sample_004.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_01_ug,2f,ml_Dox_sample_004.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_0_ug,2f,ml_Dox_sample_004.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_1_ug,2f,ml_Dox_sample_004.fcs
+│   │   │   │   ├── 20240726_SortFCS_files20240726_Sort_INX_Untransfected_sample_004.fcs
+│   │   │   │   ├── P105_GFP_fluorescence.png
+│   │   │   │   ├── P105_GFP_fluorescence.tsv
+│   │   │   │   ├── Plate4_GFP_fluorescence.png
+│   │   │   │   └── Plate4_GFP_fluorescence.tsv
+│   │   │   └── Plate5
+│   │   │       ├── 20240726_SortFCS_files20240726_Sort_INX_001_ug,2f,ml_Dox_sample_005.fcs
+│   │   │       ├── 20240726_SortFCS_files20240726_Sort_INX_01_ug,2f,ml_Dox_sample_005.fcs
+│   │   │       ├── 20240726_SortFCS_files20240726_Sort_INX_0_ug,2f,ml_Dox_sample_005.fcs
+│   │   │       ├── 20240726_SortFCS_files20240726_Sort_INX_1_ug,2f,ml_Dox_sample_005.fcs
+│   │   │       ├── Plate4_GFP_fluorescence.png
+│   │   │       ├── Plate4_GFP_fluorescence.tsv
+│   │   │       ├── Plate5_GFP_fluorescence.png
+│   │   │       └── Plate5_GFP_fluorescence.tsv
+│   │   ├── processed
+│   │   │   ├── biomart_protein_coding_ids.rds
+│   │   │   ├── cell_metadata.csv
+│   │   │   ├── cell_metadata.rds
+│   │   │   ├── combined_counts_filtered_UMIs.rds
+│   │   │   ├── gfp_correlation_data.csv
+│   │   │   ├── sce_annotated.rds
+│   │   │   └── scran_normalized_linear.rds
+│   │   └── raw
+│   │       ├── P101_GFP_fluorescence.tsv
+│   │       ├── P103_GFP_fluorescence.tsv
+│   │       ├── P105_GFP_fluorescence.tsv
+│   │       ├── P32156_101.dgecounts.rds
+│   │       ├── P32156_101.genecounts.txt
+│   │       ├── P32156_101.well_barcodes.txt
+│   │       ├── P32156_103.dgecounts.rds
+│   │       ├── P32156_103.genecounts.txt
+│   │       ├── P32156_103.well_barcodes.txt
+│   │       ├── P32156_105.dgecounts.rds
+│   │       ├── P32156_105.genecounts.txt
+│   │       ├── P32156_105.well_barcodes.txt
+│   │       ├── cell_barcodes_filtered_101.txt
+│   │       ├── cell_barcodes_filtered_103.txt
+│   │       └── cell_barcodes_filtered_105.txt
+│   ├── mESCs
+│   │   ├── final_counts.rds
+│   │   └── phenotype.csv
+│   └── sc_miRNA_seq
+│       ├── counts_clean.tsv
+│       ├── mir124_counts_DESeq2_full.csv
+│       ├── mir124_counts_TMM_full.csv
+│       ├── mir124_counts_full.csv
+│       ├── mir124_counts_normalized_full.csv
+│       ├── mirna_count_table_v2_2nd_run.tsv
+│       ├── mirna_counts_DESeq2_v2_2nd.csv
+│       └── mirna_counts_TMM_v2_2nd.csv
+├── mESC Drosha-KO benchmark separation metric and how to run each tool.docx
+├── miDGD setup and usage notes.docx
+├── resources
+│   ├── Targetscan_files
+│   ├── hs.seqXmot.counts.utr3_mrs_7mer.rds
+│   ├── hs.seqXmot.utr3_mrs_7mer.rds
+│   ├── hsa_2nt_mature.fa
+│   ├── human
+│   │   ├── Targets__combined_124-3p_124-3p.2_506-3p.rds
+│   │   ├── Targets__combined_124-3p_124-3p.2_506-3p_top100.rds
+│   │   ├── Targets__combined_124-3p_124-3p.2_506-3p_top1000.rds
+│   │   ├── Targets__combined_124-3p_124-3p.2_506-3p_top500.rds
+│   │   ├── Targets__miR-124-3p.rds
+│   │   ├── Targets__miR-124-3p_top100.rds
+│   │   ├── Targets__miR-124-3p_top1000.rds
+│   │   ├── Targets__miR-124-3p_top500.rds
+│   │   ├── Targets_combined_miR_199-5p_miR_199-3p.rds
+│   │   ├── Targetscan_files
+│   │   │   ├── TargetScan8.0__miR-124-3p.1.Human.predicted_targets.txt
+│   │   │   ├── TargetScan8.0__miR-124-3p.2_506-3p.Human.predicted_targets.txt
+│   │   │   ├── TargetScan8.0__miR-199-3p.predicted_targets.txt
+│   │   │   └── TargetScan8.0__miR-199-5p.predicted_targets.txt
+│   │   └── hsa-miR-124
+│   │       ├── Targets_miR-124-3p_Targetscan.rds
+│   │       ├── Targets_miR-124-3p_miRTarBase.csv
+│   │       ├── Targets_miR-124-3p_mirDB.txt
+│   │       └── Targets_miR-124-3p_tarBase.tsv
+│   ├── mouse
+│   │   ├── Mus_musculus_TarBase-v9.tsv
+│   │   ├── Targets_MIR17_mESCs.rds
+│   │   ├── Targets_MIR291_mESCs.rds
+│   │   ├── Targets_MIR292_mESCs.rds
+│   │   ├── Targets_Negative_Control_mESCs.rds
+│   │   ├── Targets_combined_top3_families_mESCs.rds
+│   │   ├── Targetscan_files_mouse
+│   │   │   └── mouse
+│   │   │       ├── TargetScan8.0__miR-1-3p_206-3p.predicted_targets.txt
+│   │   │       ├── TargetScan8.0__miR-122-5p.predicted_targets.txt
+│   │   │       ├── TargetScan8.0__miR-17-5p_20-5p_93-5p_106-5p.predicted_targets.txt
+│   │   │       ├── TargetScan8.0__miR-291-3p_294-3p_295-3p_302-3p.predicted_targets.txt
+│   │   │       ├── TargetScan8.0__miR-292a-3p_467a-5p.predicted_targets.txt
+│   │   │       └── TargetScan8.0__miR-9-5p.predicted_targets.txt
+│   │   ├── mature.fa
+│   │   ├── miRDB_v6.0_prediction_result.txt.gz
+│   │   └── mmu_MTI.csv
+│   └── tree_resources.txt
+├── scripts
+│   ├── HEK_Rzepiela
+│   │   ├── Basic_Rzepiela_analysis.Rmd
+│   │   ├── Prepare_Rzepiela_counts.R
+│   │   └── preprocess_targets.R
+│   ├── HEK_SS3
+│   │   ├── Extract_GFP_fluorescence_384-well_plate.R
+│   │   ├── bayesreact_comparison_rebuild.R
+│   │   ├── build_annotated_scran_dataset.R
+│   │   ├── coexpression_target_filtering.R
+│   │   ├── collect_mireact_default_results.R
+│   │   ├── depth_subsampling_scran.R
+│   │   ├── export_for_mitea_rebuild.R
+│   │   ├── gfp_fluorescence_qc.R
+│   │   ├── mir124_activity_gfp_correlation_by_cutoff.R
+│   │   ├── mireact_comparison_rebuild.R
+│   │   ├── mitea_comparison_rebuild.R
+│   │   ├── plot_all_hek_comparison.R
+│   │   ├── reevaluate_saved_results_stratified.R
+│   │   ├── run_mireact_default_launch.R
+│   │   ├── run_mitea_rebuild.py
+│   │   ├── scran_wrapper.sh
+│   │   ├── submit_bayesreact.sbatch
+│   │   └── submit_mireact.sbatch
+│   ├── Tarbase_diagnostics
+│   │   ├── 01_aggregation_ladder.R
+│   │   ├── 02_weighting.R
+│   │   ├── 03_list_quality.R
+│   │   ├── 04_size_confound.R
+│   │   ├── README.md
+│   │   └── tarbase_diag_common.R
+│   ├── Utils.R
+│   ├── coexpression_cutoff_benchmark.R
+│   ├── coexpression_filter_validation.R
+│   ├── coexpression_filter_validation_fluorescence.R
+│   ├── extract_targets_mesc.R
+│   ├── files
+│   ├── fluorescence_accuracy_comparison.R
+│   ├── fullSpearman.cpp
+│   ├── mESCs
+│   │   ├── Target_approaches.Rmd
+│   │   ├── collect_mireact_mesc.R
+│   │   ├── export_for_mitea_mesc.R
+│   │   ├── launch_mireact_mesc.R
+│   │   ├── mESC_bayesreact_separation.R
+│   │   ├── mESC_our_method_separation.R
+│   │   ├── mESC_separation_utils.R
+│   │   ├── make_pairwise_cors.R
+│   │   ├── mitea_comparison_mesc.R
+│   │   ├── mitea_comparison_mesc_mirtarbase.R
+│   │   ├── net_mESC.R
+│   │   ├── plot_all_mesc_separation.R
+│   │   ├── preprocess_family_targets.R
+│   │   ├── preprocess_targets.R
+│   │   ├── run_mitea_mesc.py
+│   │   ├── run_mitea_mesc_mirtarbase.py
+│   │   └── separate_KO_control.R
+│   ├── miRDGD
+│   │   ├── run_midgd.py
+│   │   └── setup_midgd.sh
+│   ├── sc_miRNA_seq
+│   │   ├── Extract_GFP_fluorescence_96-well_plate.R
+│   │   ├── clean_qc.R
+│   │   ├── prepare_miRNA_sc_mir124_counts.R
+│   │   └── sc_miRNA_corr_plots.R
+│   └── setup_tools.sh
+├── tools
+│   └── miReact
+│       ├── LICENSE
+│       ├── README.md
+│       ├── code
+│       │   ├── addMotifExpression.R
+│       │   ├── addMotifs.R
+│       │   ├── addSeqs.R
+│       │   ├── lambdaProbdist.R
+│       │   ├── me_mrs_script.R
+│       │   ├── mireact.R
+│       │   ├── mirnasc.wrap.R
+│       │   ├── plot.tools.R
+│       │   ├── wcmod.p.R
+│       │   └── wrapper3.R
+│       ├── data
+│       │   ├── mm.annotations1000downsample.rds
+│       │   ├── mm.exp1000downsample.rds
+│       │   ├── tarbase.rds
+│       │   ├── tcga.regmex.exp.utr3.sandbox200.rds
+│       │   └── tm.annotation.rds
+│       ├── makingUtrsForAdditionalSpecies.pdf
+│       ├── miReact_tutorial.pdf
+│       ├── motif.models
+│       │   └── patterns.7mer.Rdata
+│       ├── seqs
+│       │   ├── hs.utr3.seqlist.rds
+│       │   ├── hs.utr3.seqs.rds
+│       │   ├── mm.utr3.seqlist.rds
+│       │   └── mm.utr3.seqs.rds
+│       └── supplementalAndLegends.pdf
+├── tree.txt
+├── ~$SC Drosha-KO benchmark separation metric and how to run each tool.docx
+├── ~$an for benchmarking.docx
+└── ~$ngle-cell miRNA activity inference progress report and tool comparison.docx
+
+62 directories, 483 files
