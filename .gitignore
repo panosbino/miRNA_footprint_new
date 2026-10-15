@@ -1,4 +1,5 @@
 # External tool clones -- fetched via setup_tools.sh, not vendored
+tools
 tools/miReact/
 tools/R_library/
 tools/miDGD/

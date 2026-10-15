@@ -1,0 +1,3 @@
+"method","readout","cell_set","rho","ci_low","ci_high","p_value","n"
+"miDGD midgd_4a (hsa-miR-124-3p)","fluorescence","all",0.347097628483367,0.276040445413194,0.414161840746216,1.62020483893743e-22,745
+"miDGD midgd_4a (hsa-miR-124-3p)","fluorescence","induced",0.420735641777168,0.351907442865516,0.491297886749053,4.15307356753038e-24,529

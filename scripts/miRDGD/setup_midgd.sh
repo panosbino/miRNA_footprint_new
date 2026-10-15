@@ -35,7 +35,7 @@ if [[ "${GET_ZENODO:-0}" == 1 ]]; then
   [[ -f midgd_data.zip ]] || wget -O midgd_data.zip \
     "https://zenodo.org/records/21885644/files/miDGD_paper%20data.zip?download=1"
   echo "dd4e2051bcaad2846316980bd5ee0fd9  midgd_data.zip" | md5sum -c -
-  conda run -n midgd python - <<'EOF'
+  cat > /tmp/midgd_headers.py <<'EOF'
 import zipfile, pandas as pd, pathlib, re
 # Training files per checkpoint, taken from notebook/*.ipynb in miDGD_paper.
 MAP = {
@@ -68,5 +68,6 @@ for model, (mr, mi) in MAP.items():
     print(f"{model}: {len((out/'mrna.txt').read_text().split())} mRNA, {len(mirs)} miRNA; "
           f"miR-124 entries: {[m for m in mirs if re.search(r'-mi[Rr]-124(-|$)', m)] or 'none'}")
 EOF
+conda run -n midgd --no-capture-output python /tmp/midgd_headers.py
 fi
 echo "Done. Feature lists in $TOOLS/midgd_features/<model>/{mrna,mirna}.txt"
