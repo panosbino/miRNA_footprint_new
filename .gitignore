@@ -28,4 +28,4 @@ datasets/*/raw/
 resources/hs.seqXmot.utr3_mrs_7mer.rds
 resources/mouse/Mus_musculus_TarBase-v9.tsv
 resources/mouse/mmu_MTI.csv
-
+resources/

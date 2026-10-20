@@ -34,12 +34,12 @@ stopifnot(requireNamespace("igraph", quietly = TRUE))
 
 env_int <- function(name, default) as.integer(Sys.getenv(name, as.character(default)))
 
-BASE_DIR      <- Sys.getenv("COEXP_BASE_DIR", "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new")
+BASE_DIR      <- Sys.getenv("COEXP_BASE_DIR", "~/Desktop/Projects/miRNA_footprint_new")
 PROCESSED_DIR <- file.path(BASE_DIR, "datasets/HEK_SS3/processed")
 OUT_DIR       <- file.path(BASE_DIR, "analysis/HEK_SS3/comparisons")
 TARGETS_PATH  <- file.path(BASE_DIR, "resources/human/Targets__combined_124-3p_124-3p.2_506-3p.rds")
-UTILS_PATH    <- file.path(BASE_DIR, "scripts/HEK_SS3/Utils.R")          # defines calculate_activity()
-CPP_PATH      <- file.path(BASE_DIR, "scripts/HEK_SS3/fullSpearman.cpp") # MUST be the corrected version
+UTILS_PATH    <- file.path(BASE_DIR, "scripts/Utils.R")          # defines calculate_activity()
+CPP_PATH      <- file.path(BASE_DIR, "scripts/fullSpearman.cpp") # MUST be the corrected version
 UTR_PATH      <- file.path(BASE_DIR, "tools/miReact/seqs/hs.utr3.seqs.rds")
 dir.create(OUT_DIR, recursive = TRUE, showWarnings = FALSE)
 
@@ -380,7 +380,7 @@ feat_long <- feat %>%
             `fraction detected` = detection,
             `log10 3'UTR length` = if ("utr_length" %in% colnames(feat)) log10(utr_length) else NA_real_,
             `8mer sites` = if ("mer8_sites" %in% colnames(feat)) mer8_sites else NA_real_) %>%
-  pivot_longer(-selected, names_to = "feature", values_to = "value") %>% filter(is.finite(value))
+  pivot_longer(-selected, names_to = "feature", values_to = "value") %>% dplyr::filter(is.finite(value))
 p3 <- ggplot(feat_long, aes(selected, value, fill = selected)) +
   geom_boxplot(outlier.alpha = 0.3, show.legend = FALSE) + facet_wrap(~feature, scales = "free_y") +
   theme_bw(base_size = 13) + labs(x = NULL, y = NULL, title = "Selected genes vs other candidates")
