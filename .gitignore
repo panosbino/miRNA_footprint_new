@@ -20,6 +20,7 @@ datasets/*/raw/
 *.dgecounts.rds
 *hs.seqXmot.*.rds
 # Generated outputs -- regenerable from scripts, don't need version control
+analysis/PSCSR/benchmark/data/mitea_input/counts_data/counts_symbol.txt
 
 # R/general junk
 .Rhistory
@@ -29,3 +30,4 @@ resources/hs.seqXmot.utr3_mrs_7mer.rds
 resources/mouse/Mus_musculus_TarBase-v9.tsv
 resources/mouse/mmu_MTI.csv
 resources/*
+
