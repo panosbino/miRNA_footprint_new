@@ -17,6 +17,7 @@ R_library/
 
 # Large or raw data -- lives on Dardel filesystem, not GitHub
 datasets/*/raw/
+datasets/SC_PSCSR_v2/Data/*
 *.dgecounts.rds
 *hs.seqXmot.*.rds
 # Generated outputs -- regenerable from scripts, don't need version control

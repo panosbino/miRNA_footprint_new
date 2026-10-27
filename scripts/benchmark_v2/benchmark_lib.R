@@ -344,13 +344,26 @@ load_human_evidence <- function(families, seeds, universe, utr) {
 # whose seed (nt 2-8) equals the seed of the given miRNA.
 human_family_of <- function(mirna, family_info) {
   seed <- family_info$seed[family_info$mirbase_id == mirna]
-  if (!length(seed)) stop(mirna, " is not in miR_Family_Info (human)")
+  if (!length(seed)) {
+    core <- sub("^[a-z]{3}-(miR|let)-([0-9a-z]+).*$", "\\2", mirna)            # e.g. "124" from hsa-miR-124-3p
+    similar <- grep(paste0("-", core, "([^0-9]|$)"), family_info$mirbase_id, value = TRUE)
+    stop(sprintf("%s is not in miR_Family_Info (human, %d entries read from %s). Similar IDs: %s",
+                 mirna, nrow(family_info), HUMAN_DB$targetscan_families,
+                 if (length(similar)) paste(head(similar, 10), collapse = ", ") else "none"))
+  }
   list(seed = seed, members = sort(family_info$mirbase_id[family_info$seed == seed]))
 }
 read_family_info <- function() {
   fi <- readr::read_tsv(HUMAN_DB$targetscan_families, show_col_types = FALSE)
-  tibble(mirbase_id = fi$`MiRBase ID`, species = fi$`Species ID`, ts_family = fi$`miR family`,
-         seed = toupper(gsub("U", "T", fi$`Seed+m8`))) |> filter(species == 9606)
+  fi <- tibble(mirbase_id = trimws(fi$`MiRBase ID`), species = fi$`Species ID`, ts_family = fi$`miR family`,
+               seed = toupper(gsub("U", "T", fi$`Seed+m8`))) |> filter(species == 9606)
+  # TargetScan 8.0 gives some miRNAs isoform-specific IDs: hsa-miR-124-3p.1 (canonical
+  # seed) and hsa-miR-124-3p.2 (shifted seed). Count tables and the other databases use
+  # the plain miRBase name, so keep the canonical entry (.1, or no suffix) under that name.
+  isoform <- suppressWarnings(as.integer(sub("^.*\\.(\\d+)$", "\\1", ifelse(grepl("\\.\\d+$", fi$mirbase_id), fi$mirbase_id, NA))))
+  fi |> mutate(mirbase_id = sub("\\.\\d+$", "", mirbase_id)) |>
+    filter(is.na(isoform) | isoform == 1) |>
+    distinct(mirbase_id, .keep_all = TRUE) |> dplyr::select(-species)
 }
 
 # Mouse: per-family TargetScanMouse files plus the tables written by
@@ -377,7 +390,7 @@ load_mouse_evidence <- function(fam, universe, utr) {
   if (!missing_db(file.path(td, "targets_tarbase.tsv"), "TarBase"))
     ev$TarBase <- readr::read_tsv(file.path(td, "targets_tarbase.tsv"), show_col_types = FALSE) |>
       filter(query_mirna %in% fam$table_labels, gene_id %in% universe) |>
-      group_by(gene = gene_id) |> summarise(support = max(n_records), .groups = "drop")
+      group_by(gene = gene_id) |> summarise(support = suppressWarnings(max(n_records)), .groups = "drop")
   if (!missing_db(file.path(td, "targets_mirtarbase.tsv"), "miRTarBase")) {
     mt <- readr::read_tsv(file.path(td, "targets_mirtarbase.tsv"), show_col_types = FALSE) |>
       filter(query_mirna %in% fam$table_labels) |>
