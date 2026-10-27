@@ -9,10 +9,11 @@ miTEA's normalised expression (lowest first) and the XL-mHG test asks whether
 the list's genes are enriched among the lowest; score = -log10(p).
 
 The test is called directly with miTEA's own parameters (X = _MHG_X_PARAM,
-L = number of genes) and a set lookup, because compute_stats_per_cell() looks
-genes up in a list, which takes hours for lists of thousands of genes. A
-cross-check against compute_stats_per_cell() runs first and stops the script
-on any difference. p = 0 is written as NaN; the summary reports such cells.
+L = number of genes) and the 0/1 target vector built by array lookup, because
+compute_stats_per_cell() looks every gene up in a Python list, which takes hours
+for lists of thousands of genes. A cross-check against compute_stats_per_cell()
+runs first and stops the script on any difference. p = 0 is written as NaN; the
+summary reports such cells. To run all three datasets on SLURM: submit_mitea.sbatch.
 
 Output: <out_dir>/scores/miTEA-HiRes.tsv -- rows list_id, columns cells.
 """
@@ -46,13 +47,18 @@ LISTS = {lid: sorted(set(g["gene_symbol"]) & present) for lid, g in symbols.grou
 LISTS = {k: v for k, v in LISTS.items() if v}
 print(f"{len(LISTS)} non-empty lists")
 
-# Each cell's ranking once, reused for every list
-RANKED = {cell: list(counts_norm.loc[:, cell].sort_values().index) for cell in counts_norm.columns}
+# Each cell's ranking once, reused for every list, stored as gene positions so the
+# 0/1 target vector is one array lookup instead of ~10,000 Python lookups. The order
+# comes from the same pandas sort as miTEA's own code, so ties stay in the same order.
+GENES = list(counts_norm.index)
+GENE_POS = {g: i for i, g in enumerate(GENES)}
+RANKED = {cell: np.array([GENE_POS[g] for g in counts_norm.loc[:, cell].sort_values().index]) for cell in counts_norm.columns}
+TARGET_MASK = {lid: np.isin(np.arange(len(GENES)), [GENE_POS[g] for g in genes]).astype(np.uint8) for lid, genes in LISTS.items()}
 
 
-def pvalue(ranked_genes, targets):
-    is_target = np.uint8([g in targets for g in ranked_genes])
-    _, _, p = xlmhg.xlmhg_test(is_target, X=_MHG_X_PARAM, L=len(ranked_genes))
+def pvalue(ranked_positions, mask):
+    is_target = mask[ranked_positions]                     # 0/1 in this cell's gene order
+    _, _, p = xlmhg.xlmhg_test(is_target, X=_MHG_X_PARAM, L=len(ranked_positions))
     return p
 
 
@@ -62,15 +68,15 @@ mti = pd.DataFrame({"miRNA": check_id, "Target Gene": LISTS[check_id]})
 for cell in list(counts_norm.columns)[:N_CHECK_CELLS]:
     ranked = counts_norm.loc[:, cell].sort_values()
     _, _, ref, _ = compute_stats_per_cell(cell, ranked, [check_id], mti, debug=False)
-    fast = pvalue(list(ranked.index), set(LISTS[check_id]))
+    fast = pvalue(RANKED[cell], TARGET_MASK[check_id])
     if not np.isclose(ref[0], fast, rtol=1e-12, atol=0):
         raise RuntimeError(f"Cross-check failed for {cell}: compute_stats_per_cell p={ref[0]}, direct p={fast}")
 print(f"Cross-check passed on {N_CHECK_CELLS} cells.")
 
 
 def score_list(list_id):
-    targets = set(LISTS[list_id])
-    p = np.array([pvalue(RANKED[c], targets) for c in counts_norm.columns], dtype=float)
+    mask = TARGET_MASK[list_id]
+    p = np.array([pvalue(RANKED[c], mask) for c in counts_norm.columns], dtype=float)
     with np.errstate(divide="ignore"):
         s = -np.log10(p)
     s[~np.isfinite(s)] = np.nan
