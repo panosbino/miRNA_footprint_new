@@ -11,7 +11,7 @@
 #     score          our 5 variants + miReact on the lists (2)
 #     mitea          miTEA-HiRes (3)
 #     bayesreact     bayesReact, every motif (4)
-#     mireact_motif  miReact motif mode (5)
+#     mireact_motif  miReact motif mode for the benchmark's motifs (5)
 #     midgd          miDGD, HEK and PSCSR only (6 + run_midgd.py)
 #   summary        tables, heatmaps and per-family plots (7)
 #
@@ -43,8 +43,10 @@ DATASETS=${DATASETS:-"mESC HEK PSCSR"}
 STEPS=${STEPS:-"prepare lists score mitea bayesreact mireact_motif midgd summary"}
 MITEA_PY=${MITEA_PY:-/cfs/klemming/projects/supr/naiss2024-6-235/conda/envs/mitea/bin/python3}
 MIDGD_PY=${MIDGD_PY:-/cfs/klemming/projects/supr/naiss2024-6-235/conda/envs/midgd/bin/python}   # check this path
-# cores per parallel step (sum <= --cpus-per-task)
-CORES_SCORE=8; CORES_MITEA=10; CORES_BAYES=8; CORES_MIDGD=4          # miReact motif mode uses 1
+# cores per parallel step: a share of whatever the job receives (percent; total <= 100)
+TOTAL_CORES=${SLURM_CPUS_PER_TASK:-32}
+share() { local n=$(( TOTAL_CORES * $1 / 100 )); [ "$n" -lt 1 ] && n=1; echo "$n"; }
+CORES_SCORE=$(share 15); CORES_MITEA=$(share 35); CORES_BAYES=$(share 30); CORES_MIREACT=$(share 15); CORES_MIDGD=$(share 5)
 
 ml PDC
 module load R
@@ -88,7 +90,8 @@ midgd_step() {
     --counts "$counts" --out "$out/midgd/4a"
 }
 
-echo "[$(stamp)] benchmark v3: datasets [$DATASETS], steps [$STEPS], $SLURM_CPUS_PER_TASK cores; logs in $LOG_DIR"
+echo "[$(stamp)] benchmark v3: datasets [$DATASETS], steps [$STEPS], $TOTAL_CORES cores; logs in $LOG_DIR"
+echo "  cores per step: score $CORES_SCORE, mitea $CORES_MITEA, bayesreact $CORES_BAYES, mireact_motif $CORES_MIREACT, midgd $CORES_MIDGD"
 
 for ds in $DATASETS; do
   echo "==================== $ds ===================="
@@ -102,7 +105,7 @@ for ds in $DATASETS; do
   if want score;         then run "$ds" score env N_CORES=$CORES_SCORE Rscript $S/2_score_target_lists.R "$ds" & fi
   if want mitea;         then run "$ds" mitea env SLURM_CPUS_PER_TASK=$CORES_MITEA "$MITEA_PY" $S/3_score_mitea.py "$ds" & fi
   if want bayesreact;    then run "$ds" bayesreact env SLURM_CPUS_PER_TASK=$CORES_BAYES Rscript $S/4_run_bayesreact.R "$ds" & fi
-  if want mireact_motif; then run "$ds" mireact_motif Rscript $S/5_run_mireact_motif.R "$ds" & fi
+  if want mireact_motif; then run "$ds" mireact_motif env N_CORES=$CORES_MIREACT Rscript $S/5_run_mireact_motif.R "$ds" & fi
   if want midgd && [ "$ds" != mESC ]; then run "$ds" midgd midgd_step "$ds" & fi
   wait
 
