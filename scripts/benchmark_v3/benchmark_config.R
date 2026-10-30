@@ -26,17 +26,13 @@ MIN_LIST_SIZE        <- 10                   # smaller lists are scored but not 
 # ---- Controls ------------------------------------------------------------------------------
 N_RANDOM    <- 10                            # random gene lists (and random motifs / miRNAs) per list
 # Which genes count as targets of the benchmarked family, and are therefore removed
-# from its negative-control lists and from its random-gene pool:
-#   "all_databases"  genes listed by ANY database (default; the cleanest null)
-#   "same_database"  only genes listed by the database the list comes from (larger
-#                    pools, but they still contain targets known to other databases)
-CONTROL_EXCLUSION <- "all_databases"
-# mESC single-family benchmarks: genes shared with the other benchmarked families
-# are removed from each family's lists, so a family is tested on its own targets.
-#   "same_database"  a gene is shared if the same database lists it for another family
-#                    (default; with "all_databases" TarBase alone would remove ~half the genes)
-#   "all_databases"  a gene is shared if any database lists it for another family
-SHARED_TARGET_EXCLUSION <- "same_database"
+# from its negative-control lists and from its random-gene pool, is set PER DATASET
+# (control_exclusion in DATASETS below):
+#   "all_databases"  genes listed by ANY database (the cleanest null, but when the
+#                    databases together list most genes, the few genes left can
+#                    behave like an anti-target set -- seen in HEK v3)
+#   "same_database"  only genes listed by the database the list comes from (larger,
+#                    more typical pools; they may contain targets known to other databases)
 RANDOM_SEED <- 20261023
 
 # ---- Human target databases (HEK and PSCSR) ---------------------------------------------------
@@ -63,10 +59,11 @@ DATASETS <- list(
     out_dir          = "analysis/mESCs/benchmark_v3",
     expression       = "datasets/mESCs/final_counts.rds",            # CPM (no raw counts available)
     mitea_counts_dir = "analysis/mESCs/mitea_input/counts_data",
+    control_exclusion = "all_databases",
     # The three seed families highly expressed in mESCs (all lost in the Drosha KO).
     # "combined": one list per database for the three together, activities summed for
-    # motif methods. The single families are benchmarked on their own targets: genes
-    # shared with the other two families are removed (SHARED_TARGET_EXCLUSION).
+    # motif methods. Each single family is benchmarked on its full target lists
+    # (targets it shares with the other two families are kept).
     benchmark_families = list(
       `miR-17/291/292 (combined)` = list(
         targetscan_files = c("TargetScan8.0__miR-17-5p_20-5p_93-5p_106-5p.predicted_targets.txt",
@@ -97,6 +94,7 @@ DATASETS <- list(
     expression       = "datasets/HEK_SS3/processed/scran_normalized_linear.rds",
     mitea_counts_dir = "analysis/HEK_SS3/comparisons/mitea_input/counts_data",
     benchmark_mirnas = "hsa-miR-124-3p",                 # its seed family is benchmarked
+    control_exclusion = "same_database",                 # v3: "all_databases" left a biased pool (most genes are listed by TarBase/mirDIP)
     control_mirna    = "hsa-miR-122-5p"
   ),
   PSCSR = list(
@@ -104,7 +102,8 @@ DATASETS <- list(
     out_dir          = "analysis/PSCSR/benchmark_v3",
     expression       = "analysis/PSCSR/benchmark_v3/data/scran_normalized_linear.rds",   # written by pscsr_0
     mitea_counts_dir = "analysis/PSCSR/benchmark_v3/data/mitea_input/counts_data",
-    control_mirna    = "hsa-miR-122-5p"
+    control_mirna    = "hsa-miR-122-5p",
+    control_exclusion = "all_databases"
     # benchmarked families: the top PSCSR_TOP_N per cell line, chosen by pscsr_0
   )
 )
@@ -130,6 +129,8 @@ get_dataset <- function(name) {
   if (!name %in% names(DATASETS)) stop("Unknown dataset '", name, "'. Use one of: ", paste(names(DATASETS), collapse = ", "))
   d <- DATASETS[[name]]
   d$name <- name
+  if (!isTRUE(d$control_exclusion %in% c("all_databases", "same_database")))
+    stop("DATASETS$", name, "$control_exclusion must be 'all_databases' or 'same_database'")
   for (k in c("out_dir", "expression", "mitea_counts_dir")) d[[k]] <- file.path(BASE_DIR, d[[k]])
   dir.create(d$out_dir, recursive = TRUE, showWarnings = FALSE)
   d

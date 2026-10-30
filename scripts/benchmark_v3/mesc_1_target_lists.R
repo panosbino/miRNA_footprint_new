@@ -3,13 +3,13 @@
 #
 # Benchmarked (all lost in the Drosha KO):
 #   "miR-17/291/292 (combined)"  the three seed families together, as in v1/v2
-#   "miR-17", "miR-291a", "miR-292a"  each family alone, on its OWN targets: genes
-#       the other two families share are removed first (SHARED_TARGET_EXCLUSION)
+#   "miR-17", "miR-291a", "miR-292a"  each family alone, on its full target lists
+#       (targets shared with the other two families are kept)
 # Negative control: miR-122-5p (not expressed in mESCs), same rules, after removing
 #   the targets of ALL THREE families -- the KO removes all three, so a control that
 #   kept e.g. miR-17 targets would separate KO from Control for the miR-291 test.
 # Random: N_RANDOM same-size draws from genes that are not targets of any of the
-#   three families (CONTROL_EXCLUSION decides "targets": any database by default).
+#   three families (the dataset's control_exclusion decides what counts as a target).
 # Motif methods: combined = the three sites summed; single family = its site;
 #   control = the miR-122 site; random = motifs from a pool of N_RANDOM random 7-mers
 #   (three per draw for the combined set, one for a single family).
@@ -56,16 +56,14 @@ control_cells <- pheno$cells[pheno$Exp == "Control"]
 coexp <- function(genes) coexpression_filter(genes, expr, list(control_cells), detected)
 
 # ---- Controls: built once, excluding the targets of all three families -------------------------------------
-excluded   <- benchmark_exclusion(evidence[[combined]])
+excluded   <- benchmark_exclusion(evidence[[combined]], ds$control_exclusion)
 ctrl_lists <- build_target_lists(remove_targets(ctrl_evidence, excluded), coexp, with_mirdip = FALSE)
 
 # ---- Benchmarked lists per family ------------------------------------------------------------------------------
 rows <- list()
 for (f in names(families)) {
   cat(sprintf("Building lists for %s ...\n", f))
-  ev <- evidence[[f]]
-  if (f %in% singles) ev <- remove_targets(ev, shared_targets(evidence[setdiff(singles, f)]))
-  bench_lists <- build_target_lists(ev, coexp, with_mirdip = FALSE)
+  bench_lists <- build_target_lists(evidence[[f]], coexp, with_mirdip = FALSE)
   rows[[f]] <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe))
 }
 lists <- bind_rows(rows)

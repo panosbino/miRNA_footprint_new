@@ -10,10 +10,10 @@
 #   kind          "benchmark"        list for the benchmarked family
 #                 "negative_control" same rule, applied to the control miRNA
 #                                    after removing the benchmarked family's
-#                                    targets (CONTROL_EXCLUSION)
+#                                    targets (the dataset's control_exclusion)
 #                 "random"           random genes, same size, drawn from genes
 #                                    that are not targets of the benchmarked
-#                                    family (CONTROL_EXCLUSION; N_RANDOM draws)
+#                                    family (same exclusion; N_RANDOM draws)
 # ==============================================================================
 suppressPackageStartupMessages({ library(tidyverse); library(Matrix) })
 
@@ -86,21 +86,12 @@ full_target_list <- function(evidence, database) {
   if (database == "mirDIP") e <- filter(e, class %in% c("Medium", "High", "Very High"))
   unique(e$gene)
 }
-# Genes to remove per database for the controls of a benchmarked family
-benchmark_exclusion <- function(evidence) {
+# Genes to remove per database for the controls of a benchmarked family.
+# rule: the dataset's control_exclusion ("all_databases" or "same_database")
+benchmark_exclusion <- function(evidence, rule) {
   per_db <- map(set_names(names(evidence)), \(db) full_target_list(evidence, db))
-  if (CONTROL_EXCLUSION == "same_database") return(per_db)
-  if (CONTROL_EXCLUSION != "all_databases") stop("CONTROL_EXCLUSION must be 'all_databases' or 'same_database'")
-  everything <- unique(unlist(per_db))
-  map(per_db, \(x) everything)
-}
-# Targets of OTHER benchmarked families, removed from a family's own lists so it is
-# tested on its own targets (mESC single families; SHARED_TARGET_EXCLUSION)
-shared_targets <- function(other_evidence) {
-  dbs <- names(empty_evidence())
-  per_db <- map(set_names(dbs), \(db) unique(unlist(map(other_evidence, \(e) full_target_list(e, db)))))
-  if (SHARED_TARGET_EXCLUSION == "same_database") return(per_db)
-  if (SHARED_TARGET_EXCLUSION != "all_databases") stop("SHARED_TARGET_EXCLUSION must be 'same_database' or 'all_databases'")
+  if (rule == "same_database") return(per_db)
+  if (rule != "all_databases") stop("control_exclusion must be 'all_databases' or 'same_database'")
   everything <- unique(unlist(per_db))
   map(per_db, \(x) everything)
 }

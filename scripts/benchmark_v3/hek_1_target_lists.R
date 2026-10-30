@@ -4,7 +4,7 @@
 # Benchmarked: all human miRNAs sharing miR-124-3p's seed (nt 2-8), per
 #   TargetScan's miR_Family_Info.
 # Negative control: miR-122-5p's seed family (not expressed in HEK293), same
-#   rules, after removing miR-124's targets (CONTROL_EXCLUSION: any database by default).
+#   rules, after removing miR-124's targets (the dataset's control_exclusion in benchmark_config.R).
 # Random: N_RANDOM same-size draws from genes that are not miR-124 targets (same exclusion).
 # Motif methods: the miR-124 site; control = the miR-122 site; random = N_RANDOM
 #   random 7-mers. miDGD: the family's predicted proportion; control = miR-122's
@@ -51,7 +51,7 @@ coexp <- function(genes) coexpression_filter(genes, expr, list(induced_cells), d
 
 # ---- Target lists -------------------------------------------------------------------------------------------
 bench_lists  <- build_target_lists(evidence[[bench_name]], coexp, with_mirdip = TRUE)
-excluded <- benchmark_exclusion(evidence[[bench_name]])
+excluded <- benchmark_exclusion(evidence[[bench_name]], ds$control_exclusion)
 ctrl_lists   <- build_target_lists(remove_targets(evidence[[ctrl_name]], excluded), coexp, with_mirdip = TRUE)
 random_lists <- build_random_lists(bench_lists, excluded, universe)
 lists <- assemble_list_rows(bench_name, bench_lists, ctrl_lists, random_lists)

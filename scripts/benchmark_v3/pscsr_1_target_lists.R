@@ -5,7 +5,7 @@
 # Benchmarked: each family chosen in step 0 (top families per cell line).
 # Negative control: miR-122-5p's seed family (not expressed in these lines),
 #   rebuilt for EACH benchmarked family, because that family's targets are
-#   removed first (CONTROL_EXCLUSION: any database by default).
+#   removed first (the dataset's control_exclusion in benchmark_config.R).
 # Random: N_RANDOM same-size draws per list from genes that are not targets of
 #   the benchmarked family (same exclusion).
 # Motif methods: each family's site; control = the miR-122 site; random = one
@@ -49,7 +49,7 @@ rows <- list()
 for (f in fams$family) {
   cat(sprintf("Building lists for %s ...\n", f))
   bench_lists <- build_target_lists(evidence[[f]], coexp, with_mirdip = TRUE)
-  excluded <- benchmark_exclusion(evidence[[f]])
+  excluded <- benchmark_exclusion(evidence[[f]], ds$control_exclusion)
   ctrl_lists  <- build_target_lists(remove_targets(evidence[[ctrl_name]], excluded), coexp, with_mirdip = TRUE)
   rows[[f]]   <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe))
 }
