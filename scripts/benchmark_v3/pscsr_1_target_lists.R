@@ -29,6 +29,7 @@ fams  <- read_tsv(file.path(data_dir, "families.tsv"), show_col_types = FALSE) |
 stopifnot(identical(colnames(expr), cells$cell))
 utr <- load_utr_table("hs")
 universe <- intersect(rownames(expr)[rowMeans(expr) > 0], utr$gid)
+gene_mean <- rowMeans(expr[universe, , drop = FALSE])     # for expression-matched random lists
 cat(sprintf("Scored genes (with a 3'UTR): %d; benchmarked families: %d\n", length(universe), nrow(fams)))
 
 control <- human_family_of(ds$control_mirna, read_family_info())
@@ -51,7 +52,7 @@ for (f in fams$family) {
   bench_lists <- build_target_lists(evidence[[f]], coexp, with_mirdip = TRUE)
   excluded <- benchmark_exclusion(evidence[[f]], ds$control_exclusion)
   ctrl_lists  <- build_target_lists(remove_targets(evidence[[ctrl_name]], excluded), coexp, with_mirdip = TRUE)
-  rows[[f]]   <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe))
+  rows[[f]]   <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe, gene_mean))
 }
 lists <- bind_rows(rows)
 

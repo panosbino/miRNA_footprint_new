@@ -28,6 +28,7 @@ pheno$Exp[pheno$Exp == "WT"] <- "Control"
 expr <- read_count_matrix(ds$expression)[, pheno$cells]
 utr <- load_utr_table("mm")
 universe <- intersect(rownames(expr)[rowMeans(expr) > 0], utr$gid)
+gene_mean <- rowMeans(expr[universe, , drop = FALSE])     # for expression-matched random lists
 cat(sprintf("Expression: %d genes x %d cells; scored genes (expressed, with a 3'UTR): %d\n",
             nrow(expr), ncol(expr), length(universe)))
 
@@ -64,7 +65,7 @@ rows <- list()
 for (f in names(families)) {
   cat(sprintf("Building lists for %s ...\n", f))
   bench_lists <- build_target_lists(evidence[[f]], coexp, with_mirdip = FALSE)
-  rows[[f]] <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe))
+  rows[[f]] <- assemble_list_rows(f, bench_lists, ctrl_lists, build_random_lists(bench_lists, excluded, universe, gene_mean))
 }
 lists <- bind_rows(rows)
 

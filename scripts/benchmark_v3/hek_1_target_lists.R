@@ -25,6 +25,7 @@ expr <- read_count_matrix(ds$expression)
 gfp  <- read.csv(file.path(BASE_DIR, "datasets/HEK_SS3/processed/gfp_correlation_data.csv"))
 utr  <- load_utr_table("hs")
 universe <- intersect(rownames(expr)[rowMeans(expr) > 0], utr$gid)
+gene_mean <- rowMeans(expr[universe, , drop = FALSE])     # for expression-matched random lists
 cat(sprintf("Expression: %d genes x %d cells; scored genes (with a 3'UTR): %d\n", nrow(expr), ncol(expr), length(universe)))
 
 # ---- Families -----------------------------------------------------------------------------------
@@ -53,7 +54,7 @@ coexp <- function(genes) coexpression_filter(genes, expr, list(induced_cells), d
 bench_lists  <- build_target_lists(evidence[[bench_name]], coexp, with_mirdip = TRUE)
 excluded <- benchmark_exclusion(evidence[[bench_name]], ds$control_exclusion)
 ctrl_lists   <- build_target_lists(remove_targets(evidence[[ctrl_name]], excluded), coexp, with_mirdip = TRUE)
-random_lists <- build_random_lists(bench_lists, excluded, universe)
+random_lists <- build_random_lists(bench_lists, excluded, universe, gene_mean)
 lists <- assemble_list_rows(bench_name, bench_lists, ctrl_lists, random_lists)
 
 # ---- Motif lists ---------------------------------------------------------------------------------------------

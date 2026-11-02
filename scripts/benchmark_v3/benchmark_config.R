@@ -25,6 +25,9 @@ MIN_LIST_SIZE        <- 10                   # smaller lists are scored but not 
 
 # ---- Controls ------------------------------------------------------------------------------
 N_RANDOM    <- 10                            # random gene lists (and random motifs / miRNAs) per list
+RANDOM_MATCHING   <- "expression"            # "expression": random lists match the benchmarked list's expression
+                                             #   profile (same genes per expression bin); "none": unmatched
+RANDOM_MATCH_BINS <- 10                      # bins of mean expression used for matching
 # Which genes count as targets of the benchmarked family, and are therefore removed
 # from its negative-control lists and from its random-gene pool, is set PER DATASET
 # (control_exclusion in DATASETS below):

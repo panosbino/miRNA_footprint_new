@@ -188,18 +188,63 @@ build_target_lists <- function(evidence, coexp, with_mirdip) {
   map(L, unique)
 }
 
-# Random lists: for each list type, N_RANDOM draws of the benchmarked list's
-# size from the universe minus the benchmarked family's targets (exclusion from
-# benchmark_exclusion()). Returns NULL for a list type whose pool is smaller
-# than the list.
-build_random_lists <- function(benchmark_lists, exclusion, universe) {
+# Random lists: for each list type, N_RANDOM draws of the benchmarked list's size
+# from the universe minus the benchmarked family's targets (benchmark_exclusion()).
+# RANDOM_MATCHING = "expression": each draw matches the benchmarked list's expression
+#   profile -- the same number of genes from each of RANDOM_MATCH_BINS bins of mean
+#   expression (gene_mean, from the matrix the methods score). Random genes would
+#   otherwise be skewed towards low expression (databases list well-expressed genes),
+#   and a random set's score depends strongly on expression level (HEK: Ours-D from
+#   -0.41 for the lowest to +0.32 for the highest expression bin).
+#   When a bin has too few non-target genes, the rest come from the nearest bins;
+#   attribute "borrowed" counts them.
+# Returns NULL for a list type whose pool is smaller than the list.
+build_random_lists <- function(benchmark_lists, exclusion, universe, gene_mean = NULL) {
+  matched <- RANDOM_MATCHING == "expression"
+  if (matched && is.null(gene_mean)) stop("RANDOM_MATCHING = 'expression' needs gene_mean")
+  if (!RANDOM_MATCHING %in% c("expression", "none")) stop("RANDOM_MATCHING must be 'expression' or 'none'")
+  bins <- if (matched) expression_bins(gene_mean[universe]) else NULL
   imap(benchmark_lists, function(genes, list_type) {
     n <- length(genes)
     excluded <- unique(unlist(exclusion[list_type_databases(list_type)]))
     pool <- setdiff(universe, excluded)
     if (n == 0 || length(pool) < n) return(NULL)
-    replicate(N_RANDOM, sample(pool, n), simplify = FALSE)
+    if (!matched) return(replicate(N_RANDOM, sample(pool, n), simplify = FALSE))
+    replicate(N_RANDOM, matched_draw(genes, pool, bins), simplify = FALSE)
   })
+}
+
+# Bin of each gene by mean expression (equal-sized bins over the scored genes)
+expression_bins <- function(gene_mean) {
+  setNames(cut(rank(gene_mean, ties.method = "first"), RANDOM_MATCH_BINS, labels = FALSE), names(gene_mean))
+}
+sample_some <- function(x, k) if (k <= 0) character(0) else if (length(x) == k) x else sample(x, k)
+
+# One random draw with the same number of genes per expression bin as `genes`
+matched_draw <- function(genes, pool, bins) {
+  n_bins <- RANDOM_MATCH_BINS
+  need <- tabulate(bins[genes], nbins = n_bins)
+  pool_by_bin <- split(pool, factor(bins[pool], levels = seq_len(n_bins)))
+  picked <- character(0); borrowed <- 0
+  for (b in which(need > 0)) {
+    take <- min(need[b], length(pool_by_bin[[b]]))
+    picked <- c(picked, sample_some(pool_by_bin[[b]], take))
+    short <- need[b] - take
+    if (short > 0) {                                       # borrow from the nearest bins, alternating below / above
+      borrowed <- borrowed + short
+      for (d in seq_len(n_bins)) {
+        for (nb in c(b - d, b + d)) {
+          if (short == 0 || nb < 1 || nb > n_bins) next
+          avail <- setdiff(pool_by_bin[[nb]], picked)
+          k <- min(short, length(avail))
+          picked <- c(picked, sample_some(avail, k)); short <- short - k
+        }
+        if (short == 0) break
+      }
+    }
+  }
+  attr(picked, "borrowed") <- borrowed
+  picked
 }
 
 # One family -> rows of the lists table (benchmark, negative control, random)
@@ -208,7 +253,9 @@ assemble_list_rows <- function(family, benchmark, control, random) {
     tibble(family = family, list_type = names(benchmark), kind = "benchmark", draw = NA_integer_, genes = unname(benchmark)),
     tibble(family = family, list_type = names(control), kind = "negative_control", draw = NA_integer_, genes = unname(control)))
   for (lt in names(random)) if (!is.null(random[[lt]]))
-    rows[[length(rows) + 1]] <- tibble(family = family, list_type = lt, kind = "random", draw = seq_along(random[[lt]]), genes = random[[lt]])
+    rows[[length(rows) + 1]] <- tibble(family = family, list_type = lt, kind = "random", draw = seq_along(random[[lt]]),
+                                       borrowed = map_dbl(random[[lt]], \(g) { x <- attr(g, "borrowed"); if (is.null(x)) 0 else x }),
+                                       genes = map(random[[lt]], as.character))     # as.character drops the attribute
   bind_rows(rows)
 }
 
@@ -255,6 +302,13 @@ report_list_sizes <- function(lists) {
   sizes <- sizes |> left_join(rnd, by = c("family", "list_type")) |> mutate(random = replace_na(random, "NO (pool too small)"))
   cat("\n=== Target lists: genes per list (benchmark / negative control) and whether random lists exist ===\n")
   print(as.data.frame(sizes), row.names = FALSE)
+  if (RANDOM_MATCHING == "expression" && "borrowed" %in% names(lists)) {
+    poor <- lists |> filter(kind == "random") |> group_by(family, list_type) |>
+      summarise(borrowed_share = mean(borrowed / pmax(n_genes, 1)), .groups = "drop") |> filter(borrowed_share > 0.10)
+    cat(sprintf("Expression-matched random lists: %d list types needed > 10%% of genes from neighbouring expression bins%s\n",
+                nrow(poor), if (nrow(poor)) ":" else ""))
+    if (nrow(poor)) print(as.data.frame(mutate(poor, borrowed_share = round(borrowed_share, 2))), row.names = FALSE)
+  }
   small <- sizes |> filter(benchmark < MIN_LIST_SIZE | negative_control < MIN_LIST_SIZE)
   if (nrow(small)) cat(sprintf("%d list types have a benchmark or control list with < %d genes; they are scored but not ranked.\n",
                                nrow(small), MIN_LIST_SIZE))

@@ -21,7 +21,9 @@
 # the family's miRNAs; control = control family; random = random model miRNAs).
 #
 # Outputs (<out_dir>/results/): results_all_lists.tsv, results.tsv, summary.tsv,
-#   heatmaps.pdf, per_family_plots.pdf (one page per family and cell line / cell set)
+#   random_calibration.tsv (method + list pairs ranked by how close their random
+#   lists are to "no signal"), heatmaps.pdf, random_calibration.pdf,
+#   per_family_plots.pdf (one page per family and cell line / cell set)
 # ==============================================================================
 source(file.path(Sys.getenv("MIRNA_BASE_DIR", "/cfs/klemming/projects/supr/naiss2024-6-235/miRNA_footprint_new"),
                  "scripts/benchmark_v3/benchmark_config.R"))
@@ -170,6 +172,7 @@ write_tsv(results_all, file.path(res_dir, "results_all_lists.tsv"))
 # 4. Benchmark vs negative control vs random
 # ==============================================================================
 better_by <- function(x, reference) if (higher_is_better) x - reference else reference - x
+chance <- if (higher_is_better) 0 else 50          # metric value with no signal (rho 0; balanced error 50%)
 results <- results_all |>
   group_by(method, family, list_type, eval_set) |>
   summarise(benchmark        = value[kind == "benchmark"][1],
@@ -182,6 +185,7 @@ results <- results_all |>
             .groups = "drop") |>
   mutate(vs_control = better_by(benchmark, negative_control),
          vs_random  = better_by(benchmark, random_mean),
+         random_bias = random_mean - chance,       # how far random lists are from "no signal" (0 = well calibrated)
          rankable   = list_type == NO_LIST | (n_genes >= MIN_LIST_SIZE & !is.na(n_genes)))
 write_tsv(results, file.path(res_dir, "results.tsv"))
 
@@ -196,6 +200,8 @@ summary_tbl <- results |> filter(rankable) |>
             share_beating_control = mean(vs_control > 0, na.rm = TRUE),
             share_beating_random  = mean(vs_random > 0, na.rm = TRUE),
             benchmark = median(benchmark, na.rm = TRUE),
+            # calibration first: random_mean is replaced by its median below
+            random_bias = median(random_bias, na.rm = TRUE), abs_random_bias = median(abs(random_bias), na.rm = TRUE),
             negative_control = median(negative_control, na.rm = TRUE), random_mean = median(random_mean, na.rm = TRUE),
             vs_control = median(vs_control, na.rm = TRUE), vs_random = median(vs_random, na.rm = TRUE), .groups = "drop") |>
   arrange(desc(vs_random))
@@ -229,12 +235,52 @@ pdf(file.path(res_dir, "heatmaps.pdf"), width = 18, height = switch(ds$name, HEK
 print(heatmap("benchmark", "Benchmark metric (raw)", diverging = FALSE))
 print(heatmap("vs_control", "Difference to the negative control (positive = better than control)", diverging = TRUE))
 print(heatmap("vs_random", "Difference to random lists (positive = better than random)", diverging = TRUE))
+print(heatmap("random_bias", sprintf("Random lists: distance from no signal (random mean minus %g; 0 = well calibrated)", chance), diverging = TRUE))
+invisible(dev.off())
+
+# ==============================================================================
+# 5b. Calibration: how close to "no signal" each method + list type's random lists are.
+#     A pair whose random lists score far from chance picks up signal that has
+#     nothing to do with the miRNA (e.g. expression level, cell-level covariates),
+#     so its raw score cannot be read at face value. Ranked by the median absolute
+#     bias over families / evaluations (1 = closest to chance).
+# ==============================================================================
+calib_groups <- setdiff(group_cols, c("method", "list_type"))
+calibration <- summary_tbl |> filter(is.finite(abs_random_bias)) |>
+  group_by(across(all_of(calib_groups))) |>
+  mutate(calibration_rank = rank(abs_random_bias, ties.method = "min")) |> ungroup() |>
+  dplyr::select(all_of(calib_groups), calibration_rank, method, list_type, random_bias, abs_random_bias, random_mean, benchmark, vs_random) |>
+  arrange(across(all_of(calib_groups)), calibration_rank)
+write_tsv(calibration, file.path(res_dir, "random_calibration.tsv"))
+cat("\n=== Random-list calibration: best and worst method + list pairs (abs. distance from chance) ===\n")
+print(calibration |> group_by(across(all_of(calib_groups))) |> slice_head(n = 10) |> ungroup() |>
+        mutate(across(where(is.numeric), \(x) round(x, 3))), n = 40, width = Inf)
+print(calibration |> group_by(across(all_of(calib_groups))) |> slice_tail(n = 5) |> ungroup() |>
+        mutate(across(where(is.numeric), \(x) round(x, 3))), n = 20, width = Inf)
+
+calibration_plot <- function(d, panel_title) {
+  d <- d |> mutate(pair = paste(method, list_type, sep = "  |  "),
+                   pair = factor(pair, rev(pair[order(abs_random_bias)])),
+                   method = factor(method, method_levels))
+  ggplot(d, aes(random_bias, pair, colour = method)) +
+    geom_vline(xintercept = 0, colour = "grey50") +
+    geom_segment(aes(x = 0, xend = random_bias, yend = pair), linewidth = 0.4, alpha = 0.6) +
+    geom_point(size = 1.6) +
+    theme_bw(base_size = 8) + theme(legend.position = "top") +
+    labs(x = sprintf("Random lists: median distance from no signal (%s minus %g)", metric_name, chance), y = NULL, colour = NULL,
+         title = sprintf("Random-list calibration%s: method + list pairs ranked by distance from no signal (top = best calibrated)",
+                         if (nzchar(panel_title)) paste0(" -- ", panel_title) else ""))
+}
+panels <- if (length(calib_groups)) split(calibration, calibration[[calib_groups]]) else list(calibration)
+if (ds$name == "mESC") panels <- panels[intersect(unique(tl$lists$family), names(panels))]   # combined first
+pdf(file.path(res_dir, "random_calibration.pdf"), width = 10, height = max(6, 1.5 + 0.11 * max(map_int(panels, nrow))))
+panel_names <- if (is.null(names(panels))) rep("", length(panels)) else names(panels)
+for (k in seq_along(panels)) print(calibration_plot(panels[[k]], panel_names[k]))
 invisible(dev.off())
 # ==============================================================================
 # 6. One page per family and evaluation (PSCSR: cell line; HEK: cell set):
 #    every method and list type, with both controls next to the benchmarked value
 # ==============================================================================
-chance <- if (higher_is_better) 0 else 50
 plot_family <- function(fam, ev_set) {
   d <- results |> filter(family == fam, eval_set == ev_set)
   if (!nrow(d)) return(NULL)
@@ -263,4 +309,4 @@ for (k in seq_len(nrow(pages))) {
 }
 invisible(dev.off())
 
-cat(sprintf("\nWrote results_all_lists.tsv, results.tsv, summary.tsv, heatmaps.pdf, per_family_plots.pdf to %s\n", res_dir))
+cat(sprintf("\nWrote results_all_lists.tsv, results.tsv, summary.tsv, random_calibration.tsv, heatmaps.pdf,\n  random_calibration.pdf, per_family_plots.pdf to %s\n", res_dir))
