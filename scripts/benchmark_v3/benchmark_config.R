@@ -62,7 +62,7 @@ DATASETS <- list(
     out_dir          = "analysis/mESCs/benchmark_v3",
     expression       = "datasets/mESCs/final_counts.rds",            # CPM (no raw counts available)
     mitea_counts_dir = "analysis/mESCs/mitea_input/counts_data",
-    control_exclusion = "all_databases",
+    control_exclusion = "same_database",
     # The three seed families highly expressed in mESCs (all lost in the Drosha KO).
     # "combined": one list per database for the three together, activities summed for
     # motif methods. Each single family is benchmarked on its full target lists
@@ -106,7 +106,7 @@ DATASETS <- list(
     expression       = "analysis/PSCSR/benchmark_v3/data/scran_normalized_linear.rds",   # written by pscsr_0
     mitea_counts_dir = "analysis/PSCSR/benchmark_v3/data/mitea_input/counts_data",
     control_mirna    = "hsa-miR-122-5p",
-    control_exclusion = "all_databases"
+    control_exclusion = "same_database"
     # benchmarked families: the top PSCSR_TOP_N per cell line, chosen by pscsr_0
   )
 )

@@ -50,6 +50,7 @@ CORES_SCORE=$(share 15); CORES_MITEA=$(share 35); CORES_BAYES=$(share 30); CORES
 
 ml PDC
 module load R
+module load Rbio
 export LANG=C.UTF-8
 export R_LIBS=$MIRNA_BASE_DIR/tools/R_library${R_LIBS:+:$R_LIBS}
 cd "$MIRNA_BASE_DIR"
